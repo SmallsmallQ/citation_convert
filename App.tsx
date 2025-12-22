@@ -14,8 +14,25 @@ const Header: React.FC = () => (
         </div>
         <h1 className="text-lg font-bold text-slate-800 tracking-tight">法学引注<span className="text-indigo-600">转换器</span></h1>
       </div>
-      <div className="hidden md:block text-xs text-slate-400 font-medium">
-        学术引注 · 专业级多模型转换系统
+      
+      <div className="flex items-center space-x-4">
+        <div className="hidden md:block text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+          学术引注 · 多模型转换系统
+        </div>
+        <div className="h-4 w-px bg-slate-200 hidden md:block"></div>
+        <a 
+          href="https://www.smallsmallq.com/" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="group flex items-center space-x-2 p-1 pl-2 rounded-full hover:bg-slate-50 transition-all border border-transparent hover:border-slate-100"
+        >
+          <span className="text-[10px] font-bold text-slate-500 group-hover:text-indigo-600 transition-colors">小Q</span>
+          <img 
+            src="https://i.postimg.cc/zvQ41bSP/logo.png" 
+            alt="SmallSmallQ" 
+            className="w-8 h-8 rounded-full border border-slate-200 shadow-sm group-hover:shadow-md transition-all object-cover"
+          />
+        </a>
       </div>
     </div>
   </header>
@@ -272,7 +289,7 @@ const App: React.FC = () => {
 
       <footer className="bg-slate-900 text-slate-500 py-3 px-6 border-t border-slate-800 flex-shrink-0">
         <div className="max-w-7xl mx-auto flex justify-between items-center text-[9px] font-bold tracking-widest uppercase">
-          <p>© 2025 法学引注转换器. 小Q</p>
+          <p>© 2025 法学引注转换器. <a href="https://www.smallsmallq.com/" target="_blank" rel="noopener noreferrer" className="hover:text-indigo-400 transition-colors">小Q</a></p>
           <div className="flex space-x-4">
             <span className="flex items-center">
               <span className={`w-1 h-1 rounded-full mr-1.5 animate-pulse ${provider === AIProvider.DEEPSEEK ? 'bg-purple-500' : 'bg-blue-500'}`}></span>

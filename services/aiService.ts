@@ -16,7 +16,7 @@ const callGemini = async (prompt: string): Promise<string[]> => {
         type: Type.ARRAY,
         items: {
           type: Type.STRING,
-          description: "格式化后的引注字符串"
+          description: "完全符合标准格式的引注字符串"
         }
       }
     },
@@ -26,7 +26,8 @@ const callGemini = async (prompt: string): Promise<string[]> => {
     return JSON.parse(response.text || "[]");
   } catch (e) {
     console.error("Gemini JSON Parse Error:", e);
-    return [response.text?.trim() || ""];
+    // 兜底处理：尝试按行分割
+    return (response.text || "").split('\n').filter(line => line.trim().length > 0);
   }
 };
 
@@ -43,17 +44,16 @@ const callDeepSeek = async (prompt: string): Promise<string[]> => {
     body: JSON.stringify({
       model: "deepseek-chat",
       messages: [
-        { role: "system", content: SYSTEM_INSTRUCTION + "\n请务必只返回 JSON 数组，不要使用 markdown 代码块。" },
+        { role: "system", content: SYSTEM_INSTRUCTION },
         { role: "user", content: prompt }
       ],
       temperature: 0.1,
-      response_format: { type: "json_object" } // DeepSeek 也可以支持 JSON 输出
+      response_format: { type: "json_object" }
     })
   });
 
   if (!response.ok) {
-    const errData = await response.json();
-    throw new Error(errData.error?.message || "DeepSeek API 调用失败");
+    throw new Error("DeepSeek API 调用失败");
   }
 
   const data = await response.json();
@@ -61,8 +61,7 @@ const callDeepSeek = async (prompt: string): Promise<string[]> => {
   
   try {
     const parsed = JSON.parse(content);
-    // 兼容可能返回的 { citations: [...] } 或直接数组
-    return Array.isArray(parsed) ? parsed : (parsed.citations || [content]);
+    return Array.isArray(parsed) ? parsed : (parsed.citations || Object.values(parsed)[0] || []);
   } catch (e) {
     return [content];
   }
@@ -75,34 +74,33 @@ export const processCitation = async (
   provider: AIProvider
 ): Promise<string[]> => {
   let styleName = "《法学引注手册》";
-  let numberingHint = "不带 [序号]";
+  let specificRequirements = "必须遵循：重复引用不省略、多语言格式对齐、法律文件需包含文号。";
+  
   if (style === CitationStyle.SOCIAL_SCIENCE) {
     styleName = "《中国社会科学》引注规范";
-  }
-  if (style === CitationStyle.GB7714) {
+    specificRequirements = "注意：作者后使用冒号，文献条目间使用逗号。";
+  } else if (style === CitationStyle.GB7714) {
     styleName = "GB/T 7714-2015 (顺序编码制)";
-    numberingHint = "必须带有 [序号] 格式（如 [1], [2]...），请根据输入顺序递增编号。";
+    specificRequirements = "必须：包含 [1], [2] 序号，使用 [M][J][D] 等标识符。";
   }
 
   const prompt = `
-目标引注风格: ${styleName}
-目标语言: ${lang}
-格式要求: ${numberingHint}
+[任务说明]
+将以下原始描述转换为 ${styleName} 标准格式。
+[语种要求]
+${lang}
+[特别要求]
+${specificRequirements}
 
-用户提供的原始信息 (可能包含多个文献):
+[待处理文献]
 ${input}
 
-请将其转换为标准引注列表，并以 JSON 数组字符串形式返回。
+请直接返回符合要求的 JSON 数组。
 `;
 
-  try {
-    if (provider === AIProvider.DEEPSEEK) {
-      return await callDeepSeek(prompt);
-    } else {
-      return await callGemini(prompt);
-    }
-  } catch (error: any) {
-    console.error(`${provider} Error:`, error);
-    throw new Error(error.message || "AI 调用异常，请稍后再试。");
+  if (provider === AIProvider.DEEPSEEK) {
+    return await callDeepSeek(prompt);
+  } else {
+    return await callGemini(prompt);
   }
 };
