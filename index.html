@@ -8,17 +8,21 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
-        /* 全局应用衬线字体栈 */
+        /* 全局应用衬线字体栈，取消无衬线字体的默认干扰 */
+        :root {
+            --font-serif: 'Noto Serif SC', 'SimSun', 'STSong', 'Songti SC', 'Source Serif Pro', Georgia, serif;
+        }
+
         body {
-            font-family: 'Noto Serif SC', 'SimSun', 'STSong', 'Songti SC', 'Source Serif Pro', Georgia, serif;
+            font-family: var(--font-serif);
             background-color: #f8fafc;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
         
-        /* 统一所有输入控件的字体 */
-        input, textarea, select, button {
-            font-family: inherit;
+        /* 强制所有交互元素继承衬线字体 */
+        input, textarea, select, button, span, div, h1, h2, h3, p {
+            font-family: var(--font-serif) !important;
         }
 
         /* 自定义滚动条样式 */
@@ -34,6 +38,15 @@
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
             background: #cbd5e1;
+        }
+
+        /* 动画微调 */
+        @keyframes subtle-glow {
+            0%, 100% { box-shadow: 0 0 15px rgba(99, 102, 241, 0.1); }
+            50% { box-shadow: 0 0 25px rgba(99, 102, 241, 0.2); }
+        }
+        .animate-glow {
+            animation: subtle-glow 3s infinite;
         }
     </style>
 <script type="importmap">
