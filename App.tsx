@@ -1,21 +1,21 @@
 
 import React, { useState, useEffect } from 'react';
-import { TargetLanguage, Citation, CitationStyle } from './types';
-import { processCitation } from './services/geminiService';
+import { TargetLanguage, Citation, CitationStyle, AIProvider } from './types';
+import { processCitation } from './services/aiService';
 
 const Header: React.FC = () => (
-  <header className="bg-white border-b border-slate-200 sticky top-0 z-10">
-    <div className="max-w-5xl mx-auto px-4 h-16 flex items-center justify-between">
+  <header className="bg-white border-b border-slate-200 flex-shrink-0">
+    <div className="max-w-7xl mx-auto px-6 h-14 flex items-center justify-between">
       <div className="flex items-center space-x-2">
-        <div className="w-8 h-8 bg-indigo-600 rounded flex items-center justify-center shadow-lg shadow-indigo-200">
-          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="w-7 h-7 bg-indigo-600 rounded flex items-center justify-center shadow-lg shadow-indigo-200">
+          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
           </svg>
         </div>
-        <h1 className="text-xl font-bold text-slate-800 tracking-tight">LegalLink <span className="text-indigo-600">Citation</span></h1>
+        <h1 className="text-lg font-bold text-slate-800 tracking-tight">LegalLink <span className="text-indigo-600">Citation</span></h1>
       </div>
-      <div className="hidden md:block text-sm text-slate-500 font-medium">
-        学术引注 · 智能转换系统
+      <div className="hidden md:block text-xs text-slate-400 font-medium">
+        学术引注 · 专业级多模型转换系统
       </div>
     </div>
   </header>
@@ -25,12 +25,13 @@ const App: React.FC = () => {
   const [input, setInput] = useState('');
   const [targetLang, setTargetLang] = useState<TargetLanguage>(TargetLanguage.ZH);
   const [citationStyle, setCitationStyle] = useState<CitationStyle>(CitationStyle.LEGAL);
+  const [provider, setProvider] = useState<AIProvider>(AIProvider.DEEPSEEK);
   const [isLoading, setIsLoading] = useState(false);
   const [history, setHistory] = useState<Citation[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem('citation_history_v3');
+    const saved = localStorage.getItem('citation_history_v4');
     if (saved) {
       try {
         setHistory(JSON.parse(saved));
@@ -41,7 +42,7 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('citation_history_v3', JSON.stringify(history.slice(0, 30)));
+    localStorage.setItem('citation_history_v4', JSON.stringify(history.slice(0, 30)));
   }, [history]);
 
   const handleConvert = async () => {
@@ -49,12 +50,13 @@ const App: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const formatted = await processCitation(input, targetLang, citationStyle);
+      const formatted = await processCitation(input, targetLang, citationStyle, provider);
       const newCitation: Citation = {
         id: Date.now().toString(),
         original: input,
         formatted,
         style: citationStyle,
+        provider: provider,
         timestamp: Date.now(),
       };
       setHistory(prev => [newCitation, ...prev]);
@@ -69,7 +71,7 @@ const App: React.FC = () => {
   const clearHistory = () => {
     if (confirm('确定要清除所有历史记录吗？')) {
       setHistory([]);
-      localStorage.removeItem('citation_history_v3');
+      localStorage.removeItem('citation_history_v4');
     }
   };
 
@@ -87,72 +89,68 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="h-screen overflow-hidden flex flex-col bg-slate-50">
       <Header />
       
-      <main className="flex-grow max-w-5xl mx-auto w-full p-4 md:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
-        <div className="lg:col-span-7 space-y-6">
-          {/* Project Introduction Section */}
-          <section className="bg-slate-900 rounded-2xl p-6 md:p-8 text-white shadow-2xl relative overflow-hidden">
+      <main className="flex-1 overflow-hidden max-w-7xl mx-auto w-full p-6 grid grid-cols-1 lg:grid-cols-12 gap-6">
+        {/* Left Column: Input and Config */}
+        <div className="lg:col-span-7 flex flex-col space-y-4 overflow-hidden">
+          {/* Welcome Banner - Compact */}
+          <section className="bg-slate-900 rounded-xl p-5 text-white shadow-lg relative overflow-hidden flex-shrink-0">
             <div className="relative z-10">
-              <h2 className="text-2xl font-bold mb-4 flex items-center">
-                智能学术引注转换
-                <span className="ml-3 px-2 py-0.5 bg-indigo-500 text-[10px] uppercase tracking-widest rounded-full">Pro</span>
+              <h2 className="text-xl font-bold mb-1 flex items-center">
+                智能引注转换
+                <span className="ml-2 px-2 py-0.5 bg-indigo-500 text-[9px] uppercase tracking-widest rounded-md">PRO</span>
               </h2>
-              <p className="text-slate-300 text-sm leading-relaxed font-light">
-                LegalLink 是一款深度集成了 <span className="text-white font-medium">Gemini 3 Pro</span> 智能推理能力的引注转换系统。支持通过模糊的自然语言描述直接生成符合《法学引注手册》、《中国社会科学》引证规范以及 GB/T 7714-2015 国标格式的专业引文。无论法律案例、古籍析出还是多语言文献，LegalLink 都能确保学术引用的精准度。
+              <p className="text-slate-400 text-xs font-light">
+                集成 DeepSeek-Chat 与 Gemini 3 Pro，支持模糊语义自动补全与格式校对。
               </p>
             </div>
-            {/* Background Accent */}
-            <div className="absolute -right-10 -bottom-10 w-40 h-40 bg-indigo-600 rounded-full blur-3xl opacity-20"></div>
           </section>
 
-          <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
-            <div className="space-y-5 mb-6">
+          {/* Configuration Area */}
+          <section className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 flex flex-col flex-1 min-h-0 overflow-hidden">
+            <div className="grid grid-cols-2 gap-4 mb-4 flex-shrink-0">
+              {/* Engine Select */}
               <div>
-                <label className="text-sm font-bold text-slate-700 mb-3 block">选择引用样式</label>
-                <div className="grid grid-cols-3 gap-2">
+                <label className="text-xs font-bold text-slate-500 mb-2 flex items-center uppercase tracking-wider">
+                  AI 引擎
+                </label>
+                <div className="flex bg-slate-100 p-1 rounded-lg">
                   <button
-                    onClick={() => setCitationStyle(CitationStyle.LEGAL)}
-                    className={`py-2 px-1 text-[11px] sm:text-xs font-bold rounded-lg border transition-all ${
-                      citationStyle === CitationStyle.LEGAL 
-                      ? 'bg-indigo-600 border-indigo-600 text-white shadow-md' 
-                      : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                    onClick={() => setProvider(AIProvider.DEEPSEEK)}
+                    className={`flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all ${
+                      provider === AIProvider.DEEPSEEK 
+                      ? 'bg-white text-purple-600 shadow-sm' 
+                      : 'text-slate-400 hover:text-slate-600'
                     }`}
                   >
-                    法学引注手册
+                    DeepSeek
                   </button>
                   <button
-                    onClick={() => setCitationStyle(CitationStyle.SOCIAL_SCIENCE)}
-                    className={`py-2 px-1 text-[11px] sm:text-xs font-bold rounded-lg border transition-all ${
-                      citationStyle === CitationStyle.SOCIAL_SCIENCE 
-                      ? 'bg-indigo-600 border-indigo-600 text-white shadow-md' 
-                      : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
+                    onClick={() => setProvider(AIProvider.GEMINI)}
+                    className={`flex-1 py-1.5 text-[10px] font-bold rounded-md transition-all ${
+                      provider === AIProvider.GEMINI 
+                      ? 'bg-white text-blue-600 shadow-sm' 
+                      : 'text-slate-400 hover:text-slate-600'
                     }`}
                   >
-                    中国社会科学
-                  </button>
-                  <button
-                    onClick={() => setCitationStyle(CitationStyle.GB7714)}
-                    className={`py-2 px-1 text-[11px] sm:text-xs font-bold rounded-lg border transition-all ${
-                      citationStyle === CitationStyle.GB7714 
-                      ? 'bg-indigo-600 border-indigo-600 text-white shadow-md' 
-                      : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300'
-                    }`}
-                  >
-                    GB/T 7714
+                    Gemini
                   </button>
                 </div>
               </div>
-
-              <div className="flex items-center justify-between pt-2">
-                <label className="text-sm font-bold text-slate-700">文献自然语言描述</label>
+              
+              {/* Language Select */}
+              <div>
+                <label className="text-xs font-bold text-slate-500 mb-2 flex items-center uppercase tracking-wider">
+                  目标语言
+                </label>
                 <div className="flex bg-slate-100 p-1 rounded-lg space-x-1">
                   {Object.values(TargetLanguage).map((lang) => (
                     <button
                       key={lang}
                       onClick={() => setTargetLang(lang)}
-                      className={`px-2 py-0.5 text-[10px] font-black rounded-md transition-all ${
+                      className={`flex-1 py-1.5 text-[9px] font-black rounded-md transition-all ${
                         targetLang === lang ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'
                       }`}
                     >
@@ -162,92 +160,160 @@ const App: React.FC = () => {
                 </div>
               </div>
             </div>
-            
-            <textarea
-              className="w-full h-44 p-4 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all resize-none text-slate-700 leading-relaxed citation-font"
-              placeholder={getPlaceholder()}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-            />
-            
-            {error && (
-              <div className="mt-4 p-3 bg-red-50 text-red-600 text-xs rounded-lg flex items-start">
-                <svg className="w-4 h-4 mr-2 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-                <span>{error}</span>
+
+            {/* Style Select */}
+            <div className="mb-4 flex-shrink-0">
+              <label className="text-xs font-bold text-slate-500 mb-2 block uppercase tracking-wider">引用标准</label>
+              <div className="grid grid-cols-3 gap-2">
+                {[
+                  { id: CitationStyle.LEGAL, label: '法学引注手册' },
+                  { id: CitationStyle.SOCIAL_SCIENCE, label: '中国社会科学' },
+                  { id: CitationStyle.GB7714, label: 'GB/T 7714' }
+                ].map(style => (
+                  <button
+                    key={style.id}
+                    onClick={() => setCitationStyle(style.id)}
+                    className={`py-2 text-[11px] font-bold rounded-lg border transition-all ${
+                      citationStyle === style.id 
+                      ? 'bg-indigo-600 border-indigo-600 text-white shadow-md' 
+                      : 'bg-white border-slate-200 text-slate-600 hover:border-slate-300 shadow-sm'
+                    }`}
+                  >
+                    {style.label}
+                  </button>
+                ))}
               </div>
-            )}
+            </div>
 
-            <button
-              onClick={handleConvert}
-              disabled={isLoading || !input.trim()}
-              className={`mt-6 w-full py-4 px-6 rounded-xl font-black text-white tracking-widest transition-all flex items-center justify-center space-x-3 uppercase text-sm ${
-                isLoading || !input.trim() ? 'bg-slate-300 cursor-not-allowed' : 'bg-slate-900 hover:bg-black shadow-xl shadow-slate-200 active:scale-95'
-              }`}
-            >
-              {isLoading ? (
-                <svg className="animate-spin h-5 w-5 text-white" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-              ) : (
-                <>
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-3m-1 4l-3 3m0 0l-3-3m3 3V4" />
+            {/* Input Area */}
+            <div className="flex-1 flex flex-col min-h-0">
+              <textarea
+                className="flex-1 w-full p-4 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all resize-none text-slate-700 text-sm leading-relaxed citation-font shadow-inner overflow-y-auto"
+                placeholder={getPlaceholder()}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+              />
+              
+              {error && (
+                <div className="mt-2 p-2 bg-red-50 text-red-600 text-[10px] rounded-md border border-red-100 flex items-center flex-shrink-0">
+                  <svg className="w-3 h-3 mr-1.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  <span>一键转换标准引注</span>
-                </>
+                  <span>{error}</span>
+                </div>
               )}
-            </button>
-          </section>
 
-          <section className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-blue-50 border border-blue-100 rounded-xl p-4">
-              <p className="text-[10px] font-black text-blue-600 uppercase mb-1">Legal</p>
-              <p className="text-[11px] text-blue-800 leading-snug">法学专属，支持指导案例与法规条文。</p>
-            </div>
-            <div className="bg-emerald-50 border border-emerald-100 rounded-xl p-4">
-              <p className="text-[10px] font-black text-emerald-600 uppercase mb-1">Social Sci</p>
-              <p className="text-[11px] text-emerald-800 leading-snug">综合规范，严谨处理出版社与古籍。</p>
-            </div>
-            <div className="bg-amber-50 border border-amber-100 rounded-xl p-4">
-              <p className="text-[10px] font-black text-amber-600 uppercase mb-1">GB 7714</p>
-              <p className="text-[11px] text-amber-800 leading-snug">国标规范，支持[M]/[J]等文献标识。</p>
+              <button
+                onClick={handleConvert}
+                disabled={isLoading || !input.trim()}
+                className={`mt-4 w-full py-3 rounded-xl font-black text-white tracking-widest transition-all flex items-center justify-center space-x-2 uppercase text-xs flex-shrink-0 ${
+                  isLoading || !input.trim() 
+                  ? 'bg-slate-300 cursor-not-allowed' 
+                  : provider === AIProvider.DEEPSEEK 
+                    ? 'bg-purple-600 hover:bg-purple-700 shadow-lg active:scale-[0.98]'
+                    : 'bg-indigo-600 hover:bg-indigo-700 shadow-lg active:scale-[0.98]'
+                }`}
+              >
+                {isLoading ? (
+                  <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                ) : (
+                  <>
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    <span>转换并生成</span>
+                  </>
+                )}
+              </button>
             </div>
           </section>
         </div>
 
-        <div className="lg:col-span-5 flex flex-col space-y-4 min-h-0">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-bold text-slate-800">转换历史</h2>
+        {/* Right Column: History */}
+        <div className="lg:col-span-5 flex flex-col overflow-hidden min-h-0">
+          <div className="flex items-center justify-between mb-3 flex-shrink-0 px-1">
+            <h2 className="text-sm font-bold text-slate-800 uppercase tracking-widest flex items-center">
+              <svg className="w-4 h-4 mr-2 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              最近历史
+            </h2>
             {history.length > 0 && (
-              <button onClick={clearHistory} className="text-xs text-slate-400 hover:text-red-500 font-medium transition-colors">清除记录</button>
+              <button onClick={clearHistory} className="text-[10px] text-slate-400 hover:text-red-500 font-bold transition-colors">清除记录</button>
             )}
           </div>
 
-          <div className="flex-grow space-y-4 overflow-y-auto max-h-[calc(100vh-250px)] pb-8 pr-2 custom-scrollbar">
+          <div className="flex-1 overflow-y-auto space-y-3 pr-2 custom-scrollbar min-h-0 pb-4">
             {history.length === 0 ? (
-              <div className="bg-white rounded-xl border border-dashed border-slate-300 py-16 text-center text-slate-400">
-                <p className="text-xs font-medium">还没有转换记录，开始输入吧</p>
+              <div className="bg-white rounded-xl border-2 border-dashed border-slate-200 h-full flex items-center justify-center text-slate-400 px-6 text-center">
+                <div className="space-y-2">
+                  <div className="text-xl opacity-20">🗂️</div>
+                  <p className="text-[10px] font-medium italic">完成转换后，结果将在此处沉淀</p>
+                </div>
               </div>
             ) : (
               history.map((item) => (
-                <div key={item.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden group hover:shadow-md transition-all">
-                  <div className="px-3 py-2 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
-                    <span className={`text-[9px] px-2 py-0.5 rounded-full font-black uppercase tracking-widest ${
-                      item.style === CitationStyle.LEGAL ? 'bg-indigo-100 text-indigo-700' : 
-                      item.style === CitationStyle.SOCIAL_SCIENCE ? 'bg-emerald-100 text-emerald-700' : 
-                      'bg-amber-100 text-amber-700'
-                    }`}>
-                      {item.style === CitationStyle.LEGAL ? 'Legal' : item.style === CitationStyle.SOCIAL_SCIENCE ? 'SSCP' : 'GB7714'}
-                    </span>
-                    <button onClick={() => {
-                      navigator.clipboard.writeText(item.formatted);
-                    }} className="p-1.5 hover:bg-indigo-100 rounded text-indigo-600 transition-colors">
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div key={item.id} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden group hover:border-indigo-200 transition-all">
+                  <div className="px-3 py-1.5 bg-slate-50 border-b border-slate-100 flex justify-between items-center">
+                    <div className="flex space-x-1.5">
+                      <span className={`text-[8px] px-1.5 py-0.5 rounded font-black uppercase tracking-widest ${
+                        item.style === CitationStyle.LEGAL ? 'bg-indigo-100 text-indigo-700' : 
+                        item.style === CitationStyle.SOCIAL_SCIENCE ? 'bg-emerald-100 text-emerald-700' : 
+                        'bg-amber-100 text-amber-700'
+                      }`}>
+                        {item.style === CitationStyle.LEGAL ? 'Legal' : item.style === CitationStyle.SOCIAL_SCIENCE ? 'SSCP' : 'GB7714'}
+                      </span>
+                      <span className={`text-[8px] px-1.5 py-0.5 rounded font-black uppercase tracking-widest ${
+                        item.provider === AIProvider.DEEPSEEK ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700'
+                      }`}>
+                        {item.provider}
+                      </span>
+                    </div>
+                    <button 
+                      onClick={() => {
+                        navigator.clipboard.writeText(item.formatted);
+                      }} 
+                      className="p-1 hover:bg-white rounded border border-transparent hover:border-slate-200 text-slate-400 hover:text-indigo-600 transition-all"
+                      title="复制到剪贴板"
+                    >
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
                       </svg>
                     </button>
                   </div>
-                  <div
+                  <div className="p-3.5 space-y-1.5">
+                    <div className="text-[10px] text-slate-400 line-clamp-1 font-light italic bg-slate-50/50 p-1 rounded">
+                      “{item.original}”
+                    </div>
+                    <div className="citation-font text-slate-800 leading-relaxed text-xs select-all">
+                      {item.formatted}
+                    </div>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </main>
+
+      <footer className="bg-slate-900 text-slate-500 py-3 px-6 border-t border-slate-800 flex-shrink-0">
+        <div className="max-w-7xl mx-auto flex justify-between items-center text-[9px] font-bold tracking-widest uppercase">
+          <p>© 2024 LegalLink Citation Service.</p>
+          <div className="flex space-x-4">
+            <span className="flex items-center">
+              <span className={`w-1 h-1 rounded-full mr-1.5 animate-pulse ${provider === AIProvider.DEEPSEEK ? 'bg-purple-500' : 'bg-blue-500'}`}></span>
+              Engine Ready
+            </span>
+            <span className="text-slate-800">|</span>
+            <a href="#" className="hover:text-white transition-colors">Manual</a>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default App;

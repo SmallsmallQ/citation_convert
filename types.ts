@@ -4,6 +4,7 @@ export interface Citation {
   original: string;
   formatted: string;
   style: CitationStyle;
+  provider: AIProvider;
   timestamp: number;
 }
 
@@ -19,4 +20,9 @@ export enum CitationStyle {
   LEGAL = 'legal',
   SOCIAL_SCIENCE = 'social_science',
   GB7714 = 'gb7714'
+}
+
+export enum AIProvider {
+  GEMINI = 'gemini',
+  DEEPSEEK = 'deepseek'
 }
