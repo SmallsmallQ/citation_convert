@@ -2,8 +2,10 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import { SYSTEM_INSTRUCTION } from "../constants";
 import { TargetLanguage, CitationStyle, AIProvider } from "../types";
+import { fetchPublicationRank } from "./easyScholarService";
 
-const callGemini = async (prompt: string): Promise<string[]> => {
+const callGemini = async (prompt: string) => {
+  // Always use a named parameter for apiKey.
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
@@ -15,56 +17,19 @@ const callGemini = async (prompt: string): Promise<string[]> => {
       responseSchema: {
         type: Type.ARRAY,
         items: {
-          type: Type.STRING,
-          description: "完全符合标准格式的引注字符串"
+          type: Type.OBJECT,
+          properties: {
+            text: { type: Type.STRING },
+            level: { type: Type.STRING },
+            pubName: { type: Type.STRING }
+          },
+          required: ["text", "pubName"]
         }
       }
     },
   });
-  
-  try {
-    return JSON.parse(response.text || "[]");
-  } catch (e) {
-    console.error("Gemini JSON Parse Error:", e);
-    // 兜底处理：尝试按行分割
-    return (response.text || "").split('\n').filter(line => line.trim().length > 0);
-  }
-};
-
-const callDeepSeek = async (prompt: string): Promise<string[]> => {
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) throw new Error("未配置 DEEPSEEK_API_KEY 环境变量");
-
-  const response = await fetch("https://api.deepseek.com/chat/completions", {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      "Authorization": `Bearer ${apiKey}`
-    },
-    body: JSON.stringify({
-      model: "deepseek-chat",
-      messages: [
-        { role: "system", content: SYSTEM_INSTRUCTION },
-        { role: "user", content: prompt }
-      ],
-      temperature: 0.1,
-      response_format: { type: "json_object" }
-    })
-  });
-
-  if (!response.ok) {
-    throw new Error("DeepSeek API 调用失败");
-  }
-
-  const data = await response.json();
-  const content = data.choices[0]?.message?.content?.trim() || "[]";
-  
-  try {
-    const parsed = JSON.parse(content);
-    return Array.isArray(parsed) ? parsed : (parsed.citations || Object.values(parsed)[0] || []);
-  } catch (e) {
-    return [content];
-  }
+  // Use .text property directly as per the latest SDK guidelines.
+  return JSON.parse(response.text || "[]");
 };
 
 export const processCitation = async (
@@ -72,35 +37,26 @@ export const processCitation = async (
   lang: TargetLanguage, 
   style: CitationStyle,
   provider: AIProvider
-): Promise<string[]> => {
-  let styleName = "《法学引注手册》";
-  let specificRequirements = "必须遵循：重复引用不省略、多语言格式对齐、法律文件需包含文号。";
+): Promise<any[]> => {
+  const prompt = `转换要求：将以下文献转换为 ${style} 样式。语言：${lang}。输入内容：\n${input}`;
   
-  if (style === CitationStyle.SOCIAL_SCIENCE) {
-    styleName = "《中国社会科学》引注规范";
-    specificRequirements = "注意：作者后使用冒号，文献条目间使用逗号。";
-  } else if (style === CitationStyle.GB7714) {
-    styleName = "GB/T 7714-2015 (顺序编码制)";
-    specificRequirements = "必须：包含 [1], [2] 序号，使用 [M][J][D] 等标识符。";
-  }
+  const aiResults = await callGemini(prompt);
+  
+  const finalResults = await Promise.all(aiResults.map(async (res: any) => {
+    // 异步获取 easyScholar 实时多维度官方等级
+    const official = await fetchPublicationRank(res.pubName);
+    
+    return {
+      text: res.text,
+      level: res.level, // AI 补充信息
+      rankDetail: {
+        // Fix: Property 'officialRanks' does not exist on type 'EasyScholarRank'. 
+        // Use 'tags' property as defined in EasyScholarRank interface and Citation type.
+        tags: official.tags,
+        isNegative: official.isNegative || res.level?.includes('负面') || res.level?.includes('风险')
+      }
+    };
+  }));
 
-  const prompt = `
-[任务说明]
-将以下原始描述转换为 ${styleName} 标准格式。
-[语种要求]
-${lang}
-[特别要求]
-${specificRequirements}
-
-[待处理文献]
-${input}
-
-请直接返回符合要求的 JSON 数组。
-`;
-
-  if (provider === AIProvider.DEEPSEEK) {
-    return await callDeepSeek(prompt);
-  } else {
-    return await callGemini(prompt);
-  }
+  return finalResults;
 };

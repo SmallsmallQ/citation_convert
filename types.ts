@@ -5,6 +5,11 @@ export interface Citation {
   formatted: string;
   style: CitationStyle;
   provider: AIProvider;
+  level?: string; 
+  rankDetail?: {
+    tags: Array<{ label: string; value: string; type: string }>;
+    isNegative?: boolean;
+  };
   timestamp: number;
 }
 
