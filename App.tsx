@@ -301,7 +301,7 @@ const App: React.FC = () => {
 
       <footer className="bg-slate-900 text-slate-500 py-3 px-6 border-t border-slate-800 flex-shrink-0">
         <div className="max-w-7xl mx-auto flex justify-between items-center text-[9px] font-bold tracking-widest uppercase">
-          <p>© 2024 LegalLink Citation Service.</p>
+          <p>© 2025 LegalLink Citation Service. 小Q</p>
           <div className="flex space-x-4">
             <span className="flex items-center">
               <span className={`w-1 h-1 rounded-full mr-1.5 animate-pulse ${provider === AIProvider.DEEPSEEK ? 'bg-purple-500' : 'bg-blue-500'}`}></span>
