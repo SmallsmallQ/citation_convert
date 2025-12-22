@@ -93,7 +93,6 @@ const App: React.FC = () => {
             <div className="relative z-10">
               <h2 className="text-xl font-black mb-2 flex items-center">
                 法学引注转换器
-                <span className="ml-2 text-[10px] bg-red-600 px-2 py-0.5 rounded-full animate-pulse">负面监测中</span>
               </h2>
               <p className="text-slate-400 text-xs leading-relaxed opacity-80">
                 支持华政负面清单、CLSCI、CSSCI 集刊及法 C 扩实时官方库比对。
