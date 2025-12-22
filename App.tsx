@@ -96,7 +96,7 @@ const App: React.FC = () => {
       case CitationStyle.LEGAL:
         return "输入一个或多个文献描述（每行一个效果更佳）...\n范例：王利明《民法学》第六版，第200页";
       case CitationStyle.SOCIAL_SCIENCE:
-        return "输入一个或多个文献描述...\n范例：费孝通《乡土中国》，1948年";
+        return "输入一个或多个文献描述...\n范例：费孝通《乡土中国》， 1948年";
       case CitationStyle.GB7714:
         return "输入一个或多个文献描述...\n范例：陈登原. 国史旧闻. 北京: 中华书局, 2000";
       default:
@@ -114,7 +114,6 @@ const App: React.FC = () => {
           <section className="bg-slate-900 rounded-xl p-5 text-white shadow-lg relative overflow-hidden flex-shrink-0">
             <h2 className="text-xl font-bold mb-1 flex items-center">
               法学引注转换器
-              <span className="ml-2 px-2 py-0.5 bg-indigo-500 text-[9px] uppercase tracking-widest rounded-md">BATCH FLASH</span>
             </h2>
             <p className="text-slate-400 text-[10px] font-light">
               支持批量处理。识别多条描述并自动按序排版。
