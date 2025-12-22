@@ -12,7 +12,7 @@ const Header: React.FC = () => (
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
           </svg>
         </div>
-        <h1 className="text-lg font-bold text-slate-800 tracking-tight">LegalLink <span className="text-indigo-600">Citation</span></h1>
+        <h1 className="text-lg font-bold text-slate-800 tracking-tight">法学引注<span className="text-indigo-600">转换器</span></h1>
       </div>
       <div className="hidden md:block text-xs text-slate-400 font-medium">
         学术引注 · 专业级多模型转换系统
@@ -113,7 +113,7 @@ const App: React.FC = () => {
         <div className="lg:col-span-5 flex flex-col space-y-4 overflow-hidden">
           <section className="bg-slate-900 rounded-xl p-5 text-white shadow-lg relative overflow-hidden flex-shrink-0">
             <h2 className="text-xl font-bold mb-1 flex items-center">
-              智能引注转换
+              法学引注转换器
               <span className="ml-2 px-2 py-0.5 bg-indigo-500 text-[9px] uppercase tracking-widest rounded-md">BATCH FLASH</span>
             </h2>
             <p className="text-slate-400 text-[10px] font-light">
@@ -273,7 +273,7 @@ const App: React.FC = () => {
 
       <footer className="bg-slate-900 text-slate-500 py-3 px-6 border-t border-slate-800 flex-shrink-0">
         <div className="max-w-7xl mx-auto flex justify-between items-center text-[9px] font-bold tracking-widest uppercase">
-          <p>© 2025 LegalLink Citation Service. 小Q</p>
+          <p>© 2025 法学引注转换器. 小Q</p>
           <div className="flex space-x-4">
             <span className="flex items-center">
               <span className={`w-1 h-1 rounded-full mr-1.5 animate-pulse ${provider === AIProvider.DEEPSEEK ? 'bg-purple-500' : 'bg-blue-500'}`}></span>
