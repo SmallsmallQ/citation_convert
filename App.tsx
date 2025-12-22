@@ -37,7 +37,6 @@ const Header: React.FC = () => (
 const App: React.FC = () => {
   const [input, setInput] = useState('');
   const [citationStyle, setCitationStyle] = useState<CitationStyle>(CitationStyle.LEGAL);
-  // Default to DEEPSEEK as requested
   const [provider, setProvider] = useState<AIProvider>(AIProvider.DEEPSEEK);
   const [isLoading, setIsLoading] = useState(false);
   const [history, setHistory] = useState<Citation[]>([]);
@@ -132,7 +131,7 @@ const App: React.FC = () => {
             </div>
 
             <textarea
-              className="flex-1 w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none custom-scrollbar shadow-inner"
+              className="flex-1 w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl text-sm text-slate-900 citation-font placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none custom-scrollbar shadow-inner"
               placeholder="请粘贴文献内容（如：[1] 戴昕. 作为法律技术的安全港规则[J]. 法学家, 2023(2)...）"
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -185,7 +184,7 @@ const App: React.FC = () => {
                 <div 
                   key={item.id} 
                   onClick={() => copyToClipboard(item.formatted, item.id)}
-                  className={`group relative p-6 rounded-2xl border-2 transition-all cursor-pointer ${item.rankDetail?.isNegative ? 'bg-black border-red-600 shadow-lg shadow-red-100' : 'bg-white border-slate-100 hover:border-indigo-400 hover:shadow-lg'}`}
+                  className={`group relative p-6 rounded-2xl border-2 transition-all cursor-pointer ${item.rankDetail?.isNegative ? 'bg-white border-red-500 shadow-xl shadow-red-50 ring-1 ring-red-100' : 'bg-white border-slate-100 hover:border-indigo-400 hover:shadow-lg'}`}
                 >
                   {/* 标签行 */}
                   <div className="flex flex-wrap items-center gap-2 mb-4">
@@ -205,7 +204,7 @@ const App: React.FC = () => {
                       <span 
                         key={idx} 
                         className={`text-[9px] px-2 py-1 rounded-md font-bold flex items-center border transition-all ${
-                          tag.type === 'negative' ? 'bg-red-50 text-red-700 border-red-200' : 
+                          tag.type === 'negative' ? 'bg-red-50 text-red-700 border-red-200 shadow-sm shadow-red-100' : 
                           tag.type === 'legal_core' ? 'bg-indigo-600 text-white border-transparent' :
                           'bg-indigo-50 text-indigo-700 border-indigo-100'
                         }`}
@@ -216,8 +215,8 @@ const App: React.FC = () => {
                     ))}
                   </div>
 
-                  {/* 格式化后的引注正文 */}
-                  <div className={`leading-relaxed text-[15px] ${item.rankDetail?.isNegative ? 'text-red-500 font-bold' : 'text-slate-800'} antialiased`}>
+                  {/* 格式化后的引注正文 - 保持 citation-font 类 */}
+                  <div className={`citation-font leading-relaxed text-[15px] ${item.rankDetail?.isNegative ? 'text-red-600 font-bold' : 'text-slate-800'} antialiased`}>
                     {item.formatted}
                   </div>
 
@@ -230,7 +229,7 @@ const App: React.FC = () => {
 
                   {/* 风险警告详情 */}
                   {item.rankDetail?.isNegative && (
-                    <div className="mt-4 pt-3 border-t border-red-900/20 text-red-400 flex items-start space-x-2">
+                    <div className="mt-4 pt-3 border-t border-red-100 text-red-600 flex items-start space-x-2">
                       <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"/></svg>
                       <span className="text-[10px] font-bold uppercase tracking-widest leading-tight">
                         注意：该出版物命中华政 2024 负面清单或中科院、easyScholar 预警名单，学术投稿请慎重引用。
