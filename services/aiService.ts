@@ -1,9 +1,9 @@
 
-import { GoogleGenAI } from "@google/genai";
+import { GoogleGenAI, Type } from "@google/genai";
 import { SYSTEM_INSTRUCTION } from "../constants";
 import { TargetLanguage, CitationStyle, AIProvider } from "../types";
 
-const callGemini = async (prompt: string): Promise<string> => {
+const callGemini = async (prompt: string): Promise<string[]> => {
   const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   const response = await ai.models.generateContent({
     model: 'gemini-3-flash-preview',
@@ -11,12 +11,26 @@ const callGemini = async (prompt: string): Promise<string> => {
     config: {
       systemInstruction: SYSTEM_INSTRUCTION,
       temperature: 0.1,
+      responseMimeType: "application/json",
+      responseSchema: {
+        type: Type.ARRAY,
+        items: {
+          type: Type.STRING,
+          description: "格式化后的引注字符串"
+        }
+      }
     },
   });
-  return response.text?.trim() || "";
+  
+  try {
+    return JSON.parse(response.text || "[]");
+  } catch (e) {
+    console.error("Gemini JSON Parse Error:", e);
+    return [response.text?.trim() || ""];
+  }
 };
 
-const callDeepSeek = async (prompt: string): Promise<string> => {
+const callDeepSeek = async (prompt: string): Promise<string[]> => {
   const apiKey = process.env.DEEPSEEK_API_KEY;
   if (!apiKey) throw new Error("未配置 DEEPSEEK_API_KEY 环境变量");
 
@@ -29,11 +43,11 @@ const callDeepSeek = async (prompt: string): Promise<string> => {
     body: JSON.stringify({
       model: "deepseek-chat",
       messages: [
-        { role: "system", content: SYSTEM_INSTRUCTION },
+        { role: "system", content: SYSTEM_INSTRUCTION + "\n请务必只返回 JSON 数组，不要使用 markdown 代码块。" },
         { role: "user", content: prompt }
       ],
       temperature: 0.1,
-      stream: false
+      response_format: { type: "json_object" } // DeepSeek 也可以支持 JSON 输出
     })
   });
 
@@ -43,7 +57,15 @@ const callDeepSeek = async (prompt: string): Promise<string> => {
   }
 
   const data = await response.json();
-  return data.choices[0]?.message?.content?.trim() || "";
+  const content = data.choices[0]?.message?.content?.trim() || "[]";
+  
+  try {
+    const parsed = JSON.parse(content);
+    // 兼容可能返回的 { citations: [...] } 或直接数组
+    return Array.isArray(parsed) ? parsed : (parsed.citations || [content]);
+  } catch (e) {
+    return [content];
+  }
 };
 
 export const processCitation = async (
@@ -51,7 +73,7 @@ export const processCitation = async (
   lang: TargetLanguage, 
   style: CitationStyle,
   provider: AIProvider
-): Promise<string> => {
+): Promise<string[]> => {
   let styleName = "《法学引注手册》";
   let numberingHint = "不带 [序号]";
   if (style === CitationStyle.SOCIAL_SCIENCE) {
@@ -59,18 +81,18 @@ export const processCitation = async (
   }
   if (style === CitationStyle.GB7714) {
     styleName = "GB/T 7714-2015 (顺序编码制)";
-    numberingHint = "必须带有 [序号] 格式（如 [1]）";
+    numberingHint = "必须带有 [序号] 格式（如 [1], [2]...），请根据输入顺序递增编号。";
   }
 
   const prompt = `
 目标引注风格: ${styleName}
 目标语言: ${lang}
-格式说明: ${numberingHint}
+格式要求: ${numberingHint}
 
-用户提供的原始信息:
+用户提供的原始信息 (可能包含多个文献):
 ${input}
 
-请将其转换为单条标准引注。如果描述中包含多条，仅转换第一条。请确保包含该风格特有的标号或前缀。
+请将其转换为标准引注列表，并以 JSON 数组字符串形式返回。
 `;
 
   try {

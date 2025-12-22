@@ -43,7 +43,7 @@ const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem('citation_history_v4', JSON.stringify(history.slice(0, 30)));
+    localStorage.setItem('citation_history_v4', JSON.stringify(history.slice(0, 100)));
   }, [history]);
 
   const handleConvert = async () => {
@@ -51,16 +51,18 @@ const App: React.FC = () => {
     setIsLoading(true);
     setError(null);
     try {
-      const formatted = await processCitation(input, targetLang, citationStyle, provider);
-      const newCitation: Citation = {
-        id: Date.now().toString(),
-        original: input,
+      const results = await processCitation(input, targetLang, citationStyle, provider);
+      
+      const newCitations: Citation[] = results.map((formatted, index) => ({
+        id: (Date.now() + index).toString(),
+        original: input.split('\n')[index] || input, // 尝试对应原始行
         formatted,
         style: citationStyle,
         provider: provider,
         timestamp: Date.now(),
-      };
-      setHistory(prev => [newCitation, ...prev]);
+      }));
+
+      setHistory(prev => [...newCitations, ...prev]);
       setInput('');
     } catch (err: any) {
       setError(err.message || '转换过程中出现错误');
@@ -92,11 +94,11 @@ const App: React.FC = () => {
   const getPlaceholder = () => {
     switch (citationStyle) {
       case CitationStyle.LEGAL:
-        return "输入法律文献描述，例如：王利明《民法学》第六版，人大出版社，第200页...";
+        return "输入一个或多个文献描述（每行一个效果更佳）...\n范例：王利明《民法学》第六版，第200页";
       case CitationStyle.SOCIAL_SCIENCE:
-        return "输入社科文献描述，例如：费孝通《乡土中国》，上海人民出版社，1948年...";
+        return "输入一个或多个文献描述...\n范例：费孝通《乡土中国》，1948年";
       case CitationStyle.GB7714:
-        return "输入国标文献描述，例如：陈登原. 国史旧闻: 第1卷[M]. 北京: 中华书局, 2000...";
+        return "输入一个或多个文献描述...\n范例：陈登原. 国史旧闻. 北京: 中华书局, 2000";
       default:
         return "输入文献描述...";
     }
@@ -112,10 +114,10 @@ const App: React.FC = () => {
           <section className="bg-slate-900 rounded-xl p-5 text-white shadow-lg relative overflow-hidden flex-shrink-0">
             <h2 className="text-xl font-bold mb-1 flex items-center">
               智能引注转换
-              <span className="ml-2 px-2 py-0.5 bg-indigo-500 text-[9px] uppercase tracking-widest rounded-md">FLASH</span>
+              <span className="ml-2 px-2 py-0.5 bg-indigo-500 text-[9px] uppercase tracking-widest rounded-md">BATCH FLASH</span>
             </h2>
             <p className="text-slate-400 text-[10px] font-light">
-              支持《法学引注手册》、国标及社科标准。采用 Gemini 3 Flash 高速引擎。
+              支持批量处理。识别多条描述并自动按序排版。
             </p>
           </section>
 
@@ -181,7 +183,7 @@ const App: React.FC = () => {
 
             <div className="flex-1 flex flex-col min-h-0">
               <textarea
-                className="flex-1 w-full p-4 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all resize-none text-slate-700 text-sm leading-relaxed citation-font shadow-inner"
+                className="flex-1 w-full p-4 bg-slate-50 border border-slate-200 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition-all resize-none text-slate-700 text-sm leading-relaxed citation-font shadow-inner custom-scrollbar"
                 placeholder={getPlaceholder()}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
@@ -201,7 +203,7 @@ const App: React.FC = () => {
                   isLoading || !input.trim() ? 'bg-slate-300' : 'bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98]'
                 }`}
               >
-                {isLoading ? '正在转换...' : '生成标准引注'}
+                {isLoading ? '正在转换所有项...' : '批量生成标准引注'}
               </button>
             </div>
           </section>
@@ -211,7 +213,7 @@ const App: React.FC = () => {
         <div className="lg:col-span-7 flex flex-col overflow-hidden min-h-0">
           <div className="flex items-center justify-between mb-2 flex-shrink-0 px-2">
             <h2 className="text-xs font-bold text-slate-800 uppercase tracking-widest flex items-center">
-              最近历史 (按行排列)
+              最近历史 (按条排列)
             </h2>
             <div className="flex items-center space-x-4">
               {history.length > 0 && (
@@ -230,7 +232,9 @@ const App: React.FC = () => {
 
           <div className="flex-1 overflow-y-auto space-y-1 rounded-xl border border-slate-200 bg-white shadow-inner p-1 custom-scrollbar min-h-0">
             {history.length === 0 ? (
-              <div className="h-full flex items-center justify-center text-slate-300 text-[10px] italic">转换成功的引注将在此按行排列，点击单行即可复制</div>
+              <div className="h-full flex items-center justify-center text-slate-300 text-[10px] italic px-10 text-center">
+                转换成功的引注将在此按行排列，一次可以输入多个文献描述，转换后会自动分开，点击单行即可复制
+              </div>
             ) : (
               history.map((item, index) => (
                 <div 
@@ -273,7 +277,7 @@ const App: React.FC = () => {
           <div className="flex space-x-4">
             <span className="flex items-center">
               <span className={`w-1 h-1 rounded-full mr-1.5 animate-pulse ${provider === AIProvider.DEEPSEEK ? 'bg-purple-500' : 'bg-blue-500'}`}></span>
-              Ready (Flash)
+              Engine Ready (Batch Support)
             </span>
           </div>
         </div>
