@@ -2,7 +2,7 @@
 const SECRET_KEY = 'af4bba72f2b0473f9b7be5587213c229';
 const API_BASE = 'https://www.easyscholar.cc/open/getPublicationRank';
 
-// 官方数据集映射 (easyScholar 标准库)
+// 官方数据集映射 (easyScholar 标准库) - 仅保留用户指定的标准库
 const RANK_MAP: Record<string, string> = {
   pku: "北大核心",
   cssci: "南大核心",
@@ -10,17 +10,10 @@ const RANK_MAP: Record<string, string> = {
   sciwarn: "预警期刊",
   cscd: "CSCD",
   ssci: "SSCI",
-  sci: "SCI",
-  swufe: "西财",
-  cufe: "中财",
-  ruc: "人大",
-  nju: "南大",
-  zju: "浙大",
-  sjtu: "交大",
-  fdu: "复旦"
+  sci: "SCI"
 };
 
-// 您提供的法学专项数据集 UUID
+// 您提供的法学专项数据集 UUID (这些专项逻辑已保留)
 const MONITOR_UUIDS = {
   NEGATIVE: "1866000451577192448",     // 华政负面
   LAW_C_EXT: "1959186565267394560",    // 法C扩

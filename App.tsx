@@ -132,7 +132,7 @@ const App: React.FC = () => {
             </div>
 
             <textarea
-              className="flex-1 w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl text-sm text-slate-900 citation-font placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none custom-scrollbar shadow-inner"
+              className="flex-1 w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl text-sm text-slate-900 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none custom-scrollbar shadow-inner"
               placeholder="请粘贴文献内容（如：[1] 戴昕. 作为法律技术的安全港规则[J]. 法学家, 2023(2)...）"
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -217,7 +217,7 @@ const App: React.FC = () => {
                   </div>
 
                   {/* 格式化后的引注正文 */}
-                  <div className={`citation-font leading-relaxed text-[15px] ${item.rankDetail?.isNegative ? 'text-red-500 font-bold' : 'text-slate-800'} antialiased`}>
+                  <div className={`leading-relaxed text-[15px] ${item.rankDetail?.isNegative ? 'text-red-500 font-bold' : 'text-slate-800'} antialiased`}>
                     {item.formatted}
                   </div>
 
