@@ -6,16 +6,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>法学引注转换器</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Serif+SC:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif+SC:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
+        /* 全局应用衬线字体栈 */
         body {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
-            background-color: #f8fafc;
-        }
-        /* 衬线字体定义：优先 Noto Serif，备选系统宋体 */
-        .citation-font {
             font-family: 'Noto Serif SC', 'SimSun', 'STSong', 'Songti SC', 'Source Serif Pro', Georgia, serif;
+            background-color: #f8fafc;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
         }
+        
+        /* 统一所有输入控件的字体 */
+        input, textarea, select, button {
+            font-family: inherit;
+        }
+
         /* 自定义滚动条样式 */
         .custom-scrollbar::-webkit-scrollbar {
             width: 4px;
@@ -45,7 +50,6 @@
 </head>
 <body>
     <div id="root"></div>
-    <!-- Vite 构建所需的入口脚本标签 -->
     <script type="module" src="/index.tsx"></script>
 </body>
 </html>

@@ -82,7 +82,7 @@ const App: React.FC = () => {
   };
 
   return (
-    <div className="h-screen overflow-hidden flex flex-col bg-slate-50 text-slate-900 font-sans">
+    <div className="h-screen overflow-hidden flex flex-col bg-slate-50 text-slate-900">
       <Header />
       
       <main className="flex-1 overflow-hidden max-w-7xl mx-auto w-full p-4 lg:p-8 grid grid-cols-1 lg:grid-cols-12 gap-8">
@@ -131,7 +131,7 @@ const App: React.FC = () => {
             </div>
 
             <textarea
-              className="flex-1 w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl text-sm text-slate-900 citation-font placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none custom-scrollbar shadow-inner"
+              className="flex-1 w-full p-5 bg-slate-50 border border-slate-200 rounded-2xl text-[15px] text-slate-900 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none custom-scrollbar shadow-inner leading-relaxed"
               placeholder="请粘贴文献内容（如：[1] 戴昕. 作为法律技术的安全港规则[J]. 法学家, 2023(2)...）"
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -215,8 +215,8 @@ const App: React.FC = () => {
                     ))}
                   </div>
 
-                  {/* 格式化后的引注正文 - 保持 citation-font 类 */}
-                  <div className={`citation-font leading-relaxed text-[15px] ${item.rankDetail?.isNegative ? 'text-red-600 font-bold' : 'text-slate-800'} antialiased`}>
+                  {/* 格式化后的引注正文 */}
+                  <div className={`leading-relaxed text-[15.5px] ${item.rankDetail?.isNegative ? 'text-red-600 font-bold' : 'text-slate-800'} antialiased`}>
                     {item.formatted}
                   </div>
 
