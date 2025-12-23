@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { TargetLanguage, Citation, CitationStyle, AIProvider } from './types';
 import { processCitation } from './services/aiService';
@@ -88,8 +87,8 @@ const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
         
         <div className="mt-10 pt-8 border-t border-slate-100 text-center">
           <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
-            LegalLink 专业版引注系统<br/>
-            © 2025 全网学术合规性监测
+            法学引注转换工具<br/>
+            © 2025 工具仅供学习，请再次核查
           </p>
         </div>
       </div>
@@ -323,9 +322,9 @@ Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recu
       <footer className="bg-white text-slate-400 py-2.5 px-6 lg:px-8 border-t border-slate-200 flex-shrink-0">
         <div className="max-w-[1600px] mx-auto flex justify-between items-center text-[8px] font-black tracking-widest uppercase">
           <div className="flex items-center space-x-2">
-            <span className="text-indigo-600">LegalLink Pro</span>
+            <span className="text-indigo-600">法学引注转换工具</span>
             <span className="opacity-20">|</span>
-            <span>© 2025 专业法学引注转换工具</span>
+            <span>© 2025 工具仅供学习，请再次核查</span>
           </div>
           <div className="hidden sm:block opacity-60">
             支持 CLSCI / 法C扩 / CSSCI集刊 / 华政负面清单
