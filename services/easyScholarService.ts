@@ -10,7 +10,9 @@ const RANK_MAP: Record<string, string> = {
   sciwarn: "预警期刊",
   cscd: "CSCD",
   ssci: "SSCI",
-  sci: "SCI"
+  sci: "SCI",
+  ei: "EI",
+  jcr: "IF"
 };
 
 // 您提供的法学专项数据集 UUID (这些专项逻辑已保留)
