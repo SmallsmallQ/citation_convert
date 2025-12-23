@@ -222,7 +222,7 @@ Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recu
                   className="w-full bg-slate-50 border border-slate-200 rounded-lg text-[8px] lg:text-[9px] font-bold py-1 px-2 focus:ring-1 focus:ring-indigo-500 text-slate-900 outline-none cursor-pointer"
                 >
                   <option value={CitationStyle.LEGAL}>《法学引注手册》</option>
-                  <option value={CitationStyle.SOCIAL_SCIENCE}>《社科》规范</option>
+                  <option value={CitationStyle.SOCIAL_SCIENCE}>《中国社会科学》</option>
                   <option value={CitationStyle.GB7714}>GB/T 7714</option>
                 </select>
               </div>
@@ -340,6 +340,8 @@ Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recu
             <span className="text-indigo-600">法学引注转换工具</span>
             <span className="opacity-20">|</span>
             <span>© 2025 工具仅供学习，请再次核查</span>
+            <span className="opacity-20 hidden sm:inline">|</span>
+            <span className="hidden sm:inline">联系我: gongyunbo@stu.xjtu.edu.cn</span>
           </div>
           <div className="hidden sm:block opacity-60">
             支持 CLSCI / 法C扩 / CSSCI集刊 / 华政负面清单
