@@ -12,11 +12,11 @@ const Header: React.FC = () => (
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
           </svg>
         </div>
-        <h1 className="text-base lg:text-lg font-black text-slate-800 tracking-tight">法学引注<span className="text-indigo-600">转换器</span></h1>
+        <h1 className="text-base lg:text-lg font-black text-slate-800 tracking-tight text-nowrap">法学引注<span className="text-indigo-600">转换器</span></h1>
       </div>
       
       <div className="flex items-center space-x-4">
-        <div className="hidden sm:flex items-center space-x-2">
+        <div className="hidden sm:flex items-center space-x-2 text-nowrap">
           <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
           <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">实时数据比对中</span>
         </div>
@@ -24,7 +24,7 @@ const Header: React.FC = () => (
           href="https://www.smallsmallq.com/" 
           target="_blank" 
           rel="noopener noreferrer"
-          className="group flex items-center space-x-2 bg-slate-50 p-1 pr-3 rounded-full border border-slate-200 hover:border-indigo-200 transition-all"
+          className="group flex items-center space-x-2 bg-slate-50 p-1 pr-3 rounded-full border border-slate-200 hover:border-indigo-200 transition-all shrink-0"
         >
           <img src="https://i.postimg.cc/zvQ41bSP/logo.png" alt="Q" className="w-7 h-7 rounded-full shadow-sm object-cover"/>
           <span className="text-[11px] font-bold text-slate-600 group-hover:text-indigo-600 transition-colors">小Q工具箱</span>
@@ -34,7 +34,74 @@ const Header: React.FC = () => (
   </header>
 );
 
+const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
+  const [pass, setPass] = useState('');
+  const [error, setError] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    // 从环境变量读取预设密码
+    const correctPass = process.env.APP_PASSWORD;
+    
+    // 如果没有设置密码，默认通过（方便开发），否则进行比对
+    if (!correctPass || pass === correctPass) {
+      onLogin();
+    } else {
+      setError(true);
+      setTimeout(() => setError(false), 2000);
+    }
+  };
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-50 p-6">
+      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-100 p-8 lg:p-10 animate-glow">
+        <div className="flex flex-col items-center mb-8">
+          <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-xl shadow-indigo-100 mb-6">
+            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <h2 className="text-xl font-black text-slate-800 tracking-wider">学术访问授权</h2>
+          <p className="text-slate-400 text-xs mt-2 uppercase tracking-[0.2em]">Authorized Access Only</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="relative">
+            <input 
+              type="password"
+              placeholder="请输入访问密码"
+              value={pass}
+              onChange={(e) => setPass(e.target.value)}
+              className={`w-full bg-slate-50 border ${error ? 'border-red-500 animate-shake' : 'border-slate-200'} rounded-2xl py-4 px-6 text-center text-lg outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold placeholder:font-normal placeholder:text-slate-300`}
+              autoFocus
+            />
+            {error && (
+              <p className="absolute -bottom-6 left-0 right-0 text-center text-[10px] text-red-500 font-bold uppercase tracking-widest">
+                密码校验失败，请重新输入
+              </p>
+            )}
+          </div>
+          <button 
+            type="submit"
+            className="w-full bg-slate-900 hover:bg-indigo-600 text-white font-black py-4 rounded-2xl transition-all shadow-lg shadow-slate-200 active:scale-[0.98] uppercase text-[11px] tracking-[0.3em]"
+          >
+            进入系统
+          </button>
+        </form>
+        
+        <div className="mt-10 pt-8 border-t border-slate-100 text-center">
+          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
+            LegalLink 专业版引注系统<br/>
+            © 2025 全网学术合规性监测
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const App: React.FC = () => {
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [input, setInput] = useState('');
   const [citationStyle, setCitationStyle] = useState<CitationStyle>(CitationStyle.LEGAL);
   const [provider, setProvider] = useState<AIProvider>(AIProvider.DEEPSEEK);
@@ -43,6 +110,10 @@ const App: React.FC = () => {
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
 
   useEffect(() => {
+    // 检查会话缓存
+    const auth = sessionStorage.getItem('legallink_auth');
+    setIsAuthenticated(auth === 'true');
+
     const saved = localStorage.getItem('law_citation_v10');
     if (saved) try { setHistory(JSON.parse(saved)); } catch (e) {}
   }, []);
@@ -50,6 +121,11 @@ const App: React.FC = () => {
   useEffect(() => {
     localStorage.setItem('law_citation_v10', JSON.stringify(history.slice(0, 50)));
   }, [history]);
+
+  const handleLogin = () => {
+    sessionStorage.setItem('legallink_auth', 'true');
+    setIsAuthenticated(true);
+  };
 
   const handleConvert = async () => {
     if (!input.trim()) return;
@@ -81,6 +157,12 @@ const App: React.FC = () => {
     setTimeout(() => setCopyFeedback(null), 1500);
   };
 
+  // 初始检查状态中
+  if (isAuthenticated === null) return null;
+
+  // 未登录显示登录页
+  if (!isAuthenticated) return <Login onLogin={handleLogin} />;
+
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900">
       <Header />
@@ -103,7 +185,7 @@ const App: React.FC = () => {
           <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-5 lg:p-6 flex flex-col transition-all hover:shadow-md">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-5">
               <div>
-                <label className="text-[10px] font-black text-slate-400 mb-1.5 block uppercase tracking-widest">AI 转换引擎</label>
+                <label className="text-[10px] font-black text-slate-400 mb-1.5 block uppercase tracking-widest text-nowrap">AI 转换引擎</label>
                 <div className="flex bg-slate-100 p-1 rounded-xl">
                   {[AIProvider.GEMINI, AIProvider.DEEPSEEK].map(p => (
                     <button 
@@ -117,7 +199,7 @@ const App: React.FC = () => {
                 </div>
               </div>
               <div>
-                <label className="text-[10px] font-black text-slate-400 mb-1.5 block uppercase tracking-widest">引注格式</label>
+                <label className="text-[10px] font-black text-slate-400 mb-1.5 block uppercase tracking-widest text-nowrap">引注格式</label>
                 <select 
                   value={citationStyle} 
                   onChange={(e) => setCitationStyle(e.target.value as CitationStyle)}
@@ -244,4 +326,22 @@ const App: React.FC = () => {
 
       {/* 页脚整合看板 */}
       <footer className="bg-white text-slate-400 py-4 px-6 lg:px-8 border-t border-slate-200 flex-shrink-0">
-        <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] font-black tracking
+        <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] font-black tracking-widest uppercase text-center sm:text-left">
+          <div className="flex items-center space-x-2">
+            <span className="text-indigo-600">LegalLink Pro</span>
+            <span className="hidden sm:inline opacity-20">|</span>
+            <span className="text-slate-400">© 2025 专业法学引注转换工具</span>
+          </div>
+          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 items-center text-nowrap">
+            <div className="flex items-center space-x-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
+              <span>支持 CLSCI / 法C扩 / CSSCI集刊 / 华政负面清单及全网预警名录</span>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+};
+
+export default App;
