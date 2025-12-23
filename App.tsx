@@ -100,14 +100,15 @@ const App: React.FC = () => {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [input, setInput] = useState('');
   const [citationStyle, setCitationStyle] = useState<CitationStyle>(CitationStyle.LEGAL);
+  // Default to DEEPSEEK as requested by user
   const [provider, setProvider] = useState<AIProvider>(AIProvider.DEEPSEEK);
   const [isLoading, setIsLoading] = useState(false);
   const [history, setHistory] = useState<Citation[]>([]);
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
 
-  const DEFAULT_EXAMPLE = `申卫星、刘云：《法学研究新范式：计算法学的内涵、范畴与方法》，载《法学研究》2020年第5期，第3-23页。
+  const DEFAULT_EXAMPLE = `Charles A. Reich, The New Property, 73 Yale Law Journal 733 (1964).
+申卫星、刘云：《法学研究新范式：计算法学的内涵、范畴与方法》，载《法学研究》2020年第5期，第3-23页。
 生成式人工智能的知识产权法律因应与制度创新》，载《法制博览》2025年第32期，第130-132页。
-胡传鹏、邓晓红、周治金等：《神经法学:年轻的认知神经科学与古老的法学联姻》，载《科学通报》2011年第36期，第3041-3053页。
 Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recursively generated data[J]. Nature, 2024, 631(8022): 755-759.`;
 
   useEffect(() => {
@@ -143,7 +144,6 @@ Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recu
       }));
       setHistory(prev => [...newCitations, ...prev]);
       setInput('');
-      // 在手机端转换后滚动到顶部看结果
       if (window.innerWidth < 1024) {
         window.scrollTo({ top: 0, behavior: 'smooth' });
       }
@@ -155,9 +155,26 @@ Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recu
   };
 
   const copyToClipboard = (text: string, id: string) => {
-    navigator.clipboard.writeText(text);
+    if (!text) return;
+    const cleanText = text.replace(/\*/g, '');
+    navigator.clipboard.writeText(cleanText);
     setCopyFeedback(id);
     setTimeout(() => setCopyFeedback(null), 1500);
+  };
+
+  const renderFormattedText = (text: string) => {
+    if (!text) return null;
+    const parts = text.split(/(\*[^*]+\*)/g);
+    return (
+      <span>
+        {parts.map((part, index) => {
+          if (part.startsWith('*') && part.endsWith('*') && part.length > 2) {
+            return <i key={index} className="italic font-serif">{part.slice(1, -1)}</i>;
+          }
+          return <span key={index}>{part}</span>;
+        })}
+      </span>
+    );
   };
 
   if (isAuthenticated === null) return null;
@@ -168,7 +185,6 @@ Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recu
       <Header />
       
       <main className="max-w-[1600px] mx-auto w-full p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 lg:overflow-hidden min-h-0">
-        {/* 输入面板 - 响应式修复 */}
         <div className="lg:col-span-4 flex flex-col space-y-4 lg:space-y-5 lg:h-full lg:overflow-hidden">
           <section className="bg-slate-900 rounded-2xl p-4 lg:p-5 text-white shadow-xl shadow-slate-200 relative overflow-hidden animate-glow flex-shrink-0">
             <div className="relative z-10">
@@ -245,7 +261,6 @@ Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recu
           </section>
         </div>
 
-        {/* 结果面板 */}
         <div className="lg:col-span-8 flex flex-col lg:h-full lg:overflow-hidden min-h-0">
           <div className="flex items-center justify-between mb-2 px-1 flex-shrink-0">
             <h2 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center">
@@ -304,7 +319,7 @@ Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recu
                   </div>
 
                   <div className={`leading-relaxed text-[14px] lg:text-[15px] antialiased ${item.rankDetail?.isNegative ? 'text-red-600 font-bold italic' : 'text-slate-800'}`}>
-                    {item.formatted}
+                    {renderFormattedText(item.formatted)}
                   </div>
 
                   {copyFeedback === item.id && (

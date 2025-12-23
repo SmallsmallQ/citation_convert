@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { SYSTEM_INSTRUCTION } from "../constants";
 import { TargetLanguage, CitationStyle, AIProvider } from "../types";
@@ -55,9 +54,8 @@ const callDeepSeek = async (prompt: string) => {
         { role: "system", content: SYSTEM_INSTRUCTION },
         { role: "user", content: prompt }
       ],
-      response_format: {
-        type: "json_object"
-      },
+      // 移除 response_format: { type: "json_object" }，因为系统指令要求返回数组 [...]
+      // 许多模型在 json_object 模式下强制要求返回对象 {...}，这会导致冲突。
       temperature: 0.1
     })
   });
@@ -72,10 +70,15 @@ const callDeepSeek = async (prompt: string) => {
   
   // 兼容某些情况下 AI 返回的 JSON 被包裹在代码块中的情况
   const jsonStr = content.replace(/```json|```/g, "").trim();
-  const parsed = JSON.parse(jsonStr);
   
-  // DeepSeek 返回的可能是对象包装的数组，或者是直接数组
-  return Array.isArray(parsed) ? parsed : (parsed.citations || parsed.data || []);
+  try {
+    const parsed = JSON.parse(jsonStr);
+    // DeepSeek 返回的可能是对象包装的数组，或者是直接数组
+    return Array.isArray(parsed) ? parsed : (parsed.citations || parsed.data || parsed.results || []);
+  } catch (e) {
+    console.error("DeepSeek Parse Error:", content);
+    throw new Error("DeepSeek 返回数据格式异常");
+  }
 };
 
 export const processCitation = async (
