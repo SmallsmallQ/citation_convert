@@ -4,7 +4,7 @@ import { TargetLanguage, Citation, CitationStyle, AIProvider } from './types';
 import { processCitation } from './services/aiService';
 
 const Header: React.FC = () => (
-  <header className="bg-white border-b border-slate-200 flex-shrink-0 z-20">
+  <header className="bg-white border-b border-slate-200 flex-shrink-0 z-20 sticky top-0">
     <div className="max-w-[1600px] mx-auto px-4 lg:px-6 h-14 flex items-center justify-between">
       <div className="flex items-center space-x-2">
         <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-200">
@@ -50,7 +50,7 @@ const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
   };
 
   return (
-    <div className="h-screen w-screen flex items-center justify-center bg-slate-50 p-6 overflow-hidden">
+    <div className="min-h-screen w-screen flex items-center justify-center bg-slate-50 p-6">
       <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-100 p-8 lg:p-10 animate-glow">
         <div className="flex flex-col items-center mb-8">
           <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-xl shadow-indigo-100 mb-6">
@@ -144,6 +144,10 @@ Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recu
       }));
       setHistory(prev => [...newCitations, ...prev]);
       setInput('');
+      // 在手机端转换后滚动到顶部看结果
+      if (window.innerWidth < 1024) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
     } catch (err: any) { 
       alert(err.message || '转换错误，请检查网络或 API 配置'); 
     } finally { 
@@ -161,12 +165,12 @@ Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recu
   if (!isAuthenticated) return <Login onLogin={handleLogin} />;
 
   return (
-    <div className="h-screen flex flex-col bg-slate-50 text-slate-900 overflow-hidden">
+    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 lg:h-screen">
       <Header />
       
-      <main className="max-w-[1600px] mx-auto w-full p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 overflow-hidden">
-        {/* 输入面板 - 重点修复: 确保按钮不被遮挡 */}
-        <div className="lg:col-span-4 flex flex-col space-y-4 lg:space-y-5 overflow-hidden h-full">
+      <main className="max-w-[1600px] mx-auto w-full p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 lg:overflow-hidden min-h-0">
+        {/* 输入面板 - 响应式修复 */}
+        <div className="lg:col-span-4 flex flex-col space-y-4 lg:space-y-5 lg:h-full lg:overflow-hidden">
           <section className="bg-slate-900 rounded-2xl p-4 lg:p-5 text-white shadow-xl shadow-slate-200 relative overflow-hidden animate-glow flex-shrink-0">
             <div className="relative z-10">
               <h2 className="text-base lg:text-lg font-black mb-1 flex items-center tracking-wider">
@@ -179,7 +183,7 @@ Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recu
             <div className="absolute -right-10 -bottom-10 w-24 h-24 bg-indigo-600/30 rounded-full blur-3xl"></div>
           </section>
 
-          <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 lg:p-5 flex flex-col flex-1 min-h-0 overflow-hidden transition-all hover:shadow-md">
+          <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 lg:p-5 flex flex-col lg:flex-1 lg:min-h-0 transition-all hover:shadow-md h-auto">
             <div className="grid grid-cols-2 gap-3 mb-3 flex-shrink-0">
               <div>
                 <label className="text-[9px] font-black text-slate-400 mb-1 block uppercase tracking-widest">AI 引擎</label>
@@ -210,7 +214,7 @@ Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recu
             </div>
 
             <textarea
-              className="w-full flex-1 p-3 lg:p-4 bg-slate-50 border border-slate-200 rounded-xl text-[14px] text-slate-900 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none custom-scrollbar shadow-inner leading-relaxed min-h-[100px]"
+              className="w-full lg:flex-1 p-3 lg:p-4 bg-slate-50 border border-slate-200 rounded-xl text-[14px] text-slate-900 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none custom-scrollbar shadow-inner leading-relaxed min-h-[160px] lg:min-h-[100px]"
               placeholder="请粘贴原始文献条目..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -229,10 +233,10 @@ Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recu
             <button
               onClick={handleConvert}
               disabled={isLoading || !input.trim()}
-              className={`mt-4 w-full py-3.5 rounded-xl font-black text-white transition-all uppercase text-[10px] lg:text-[11px] tracking-[0.2em] shadow-lg flex items-center justify-center space-x-2 flex-shrink-0 z-10 ${isLoading ? 'bg-slate-300 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98]'}`}
+              className={`mt-4 w-full py-4 rounded-xl font-black text-white transition-all uppercase text-[10px] lg:text-[11px] tracking-[0.2em] shadow-lg flex items-center justify-center space-x-2 flex-shrink-0 z-10 ${isLoading ? 'bg-slate-300 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98]'}`}
             >
               {isLoading && (
-                <svg className="animate-spin h-3 w-3 text-white" viewBox="0 0 24 24">
+                <svg className="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
@@ -243,7 +247,7 @@ Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recu
         </div>
 
         {/* 结果面板 */}
-        <div className="lg:col-span-8 flex flex-col h-full overflow-hidden">
+        <div className="lg:col-span-8 flex flex-col lg:h-full lg:overflow-hidden min-h-0">
           <div className="flex items-center justify-between mb-2 px-1 flex-shrink-0">
             <h2 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center">
               监测报告
@@ -257,15 +261,15 @@ Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recu
             )}
           </div>
 
-          <div className="flex-1 overflow-y-auto custom-scrollbar space-y-4 pr-1">
+          <div className="flex-1 lg:overflow-y-auto custom-scrollbar space-y-4 pr-1">
             {history.length === 0 ? (
-              <div className="bg-white border border-slate-200 border-dashed rounded-3xl h-full flex flex-col items-center justify-center text-slate-300 space-y-6">
+              <div className="bg-white border border-slate-200 border-dashed rounded-3xl h-[200px] lg:h-full flex flex-col items-center justify-center text-slate-300 space-y-6">
                 <div className="w-14 h-14 bg-slate-50 rounded-full flex items-center justify-center border border-slate-100">
                   <svg className="w-6 h-6 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
                 </div>
                 <div className="text-center px-4">
                   <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-1 text-slate-400">等待处理文献</p>
-                  <p className="text-[8px] opacity-60">在左侧输入后，系统将实时比对官方数据库并标注等级</p>
+                  <p className="text-[8px] opacity-60">在上方输入后，系统将实时比对官方数据库并标注等级</p>
                 </div>
               </div>
             ) : (
