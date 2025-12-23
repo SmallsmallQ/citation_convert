@@ -131,7 +131,7 @@ const App: React.FC = () => {
             </div>
 
             <textarea
-              className="w-full min-h-[180px] lg:h-64 p-4 lg:p-5 bg-slate-50 border border-slate-200 rounded-2xl text-[15.5px] text-slate-900 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none custom-scrollbar shadow-inner leading-relaxed"
+              className="w-full min-h-[160px] lg:h-64 p-4 lg:p-5 bg-slate-50 border border-slate-200 rounded-2xl text-[15.5px] text-slate-900 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none custom-scrollbar shadow-inner leading-relaxed"
               placeholder="请粘贴原始文献条目，支持批量输入..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
@@ -140,7 +140,7 @@ const App: React.FC = () => {
             <button
               onClick={handleConvert}
               disabled={isLoading || !input.trim()}
-              className={`mt-4 lg:mt-6 w-full py-3.5 lg:py-4 rounded-2xl font-black text-white transition-all uppercase text-[11px] tracking-[0.2em] shadow-lg flex items-center justify-center space-x-2 ${isLoading ? 'bg-slate-300 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] shadow-indigo-100'}`}
+              className={`mt-4 lg:mt-6 w-full py-4 lg:py-4.5 rounded-2xl font-black text-white transition-all uppercase text-[12px] tracking-[0.2em] shadow-lg flex items-center justify-center space-x-2 ${isLoading ? 'bg-slate-300 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98] shadow-indigo-100'}`}
             >
               {isLoading && (
                 <svg className="animate-spin h-4 w-4 text-white" viewBox="0 0 24 24">
@@ -148,7 +148,7 @@ const App: React.FC = () => {
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
               )}
-              <span>{isLoading ? '正在进行官方库比对...' : '立即转换引注格式'}</span>
+              <span>{isLoading ? '正在进行库比对...' : '立即转换引注格式'}</span>
             </button>
           </section>
         </div>
@@ -225,7 +225,7 @@ const App: React.FC = () => {
                   {item.rankDetail?.isNegative && (
                     <div className="mt-4 pt-3 border-t border-red-100 text-red-600 flex items-start space-x-2">
                       <svg className="w-4 h-4 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z"/></svg>
-                      <span className="text-[10px] font-bold uppercase tracking-[0.05em] leading-tight">
+                      <span className="text-[10px] font-bold uppercase tracking-[0.05em] leading-tight text-red-600">
                         注意：出版物命中华政负面清单或全网预警名录。
                       </span>
                     </div>
@@ -244,26 +244,4 @@ const App: React.FC = () => {
 
       {/* 页脚整合看板 */}
       <footer className="bg-white text-slate-400 py-4 px-6 lg:px-8 border-t border-slate-200 flex-shrink-0">
-        <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] font-black tracking-widest uppercase text-center sm:text-left">
-          <div className="flex items-center space-x-2">
-            <span className="text-indigo-600">LegalLink Pro v10.5</span>
-            <span className="hidden sm:inline opacity-20">|</span>
-            <span className="text-slate-400">© 2025 专业法学引注转换工具</span>
-          </div>
-          <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 items-center">
-            <div className="flex items-center space-x-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-indigo-500"></span>
-              <span>集成 CLSCI / 法C扩 / CSSCI集刊</span>
-            </div>
-            <div className="flex items-center space-x-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
-              <span>同步华政负面清单及预警名录</span>
-            </div>
-          </div>
-        </div>
-      </footer>
-    </div>
-  );
-};
-
-export default App;
+        <div className="max-w-[1600px] mx-auto flex flex-col sm:flex-row justify-between items-center gap-4 text-[10px] font-black tracking
