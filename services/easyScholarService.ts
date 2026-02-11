@@ -1,5 +1,4 @@
 
-const SECRET_KEY = 'af4bba72f2b0473f9b7be5587213c229';
 const API_BASE = 'https://www.easyscholar.cc/open/getPublicationRank';
 
 // 官方数据集映射 (easyScholar 标准库) - 仅保留用户指定的标准库
@@ -35,9 +34,11 @@ export interface EasyScholarRank {
 }
 
 export const fetchPublicationRank = async (name: string): Promise<EasyScholarRank> => {
-  if (!name) return { tags: [], isNegative: false };
+  const secretKey = process.env.EASY_SCHOLAR_SECRET;
+  
+  if (!name || !secretKey) return { tags: [], isNegative: false };
   try {
-    const url = `${API_BASE}?secretKey=${SECRET_KEY}&publicationName=${encodeURIComponent(name)}`;
+    const url = `${API_BASE}?secretKey=${secretKey}&publicationName=${encodeURIComponent(name)}`;
     const response = await fetch(url);
     const result = await response.json();
     

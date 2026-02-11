@@ -33,71 +33,7 @@ const Header: React.FC = () => (
   </header>
 );
 
-const Login: React.FC<{ onLogin: () => void }> = ({ onLogin }) => {
-  const [pass, setPass] = useState('');
-  const [error, setError] = useState(false);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const correctPass = process.env.APP_PASSWORD;
-    if (!correctPass || pass === correctPass) {
-      onLogin();
-    } else {
-      setError(true);
-      setTimeout(() => setError(false), 2000);
-    }
-  };
-
-  return (
-    <div className="min-h-screen w-screen flex items-center justify-center bg-slate-50 p-6">
-      <div className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-slate-100 p-8 lg:p-10 animate-glow">
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-16 h-16 bg-indigo-600 rounded-2xl flex items-center justify-center shadow-xl shadow-indigo-100 mb-6">
-            <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-            </svg>
-          </div>
-          <h2 className="text-xl font-black text-slate-800 tracking-wider">学术访问授权</h2>
-          <p className="text-slate-400 text-xs mt-2 uppercase tracking-[0.2em]">Authorized Access Only</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="relative">
-            <input 
-              type="password"
-              placeholder="请输入访问密码"
-              value={pass}
-              onChange={(e) => setPass(e.target.value)}
-              className={`w-full bg-slate-50 border ${error ? 'border-red-500 animate-shake' : 'border-slate-200'} rounded-2xl py-4 px-6 text-center text-lg outline-none focus:ring-2 focus:ring-indigo-500 transition-all font-bold placeholder:font-normal placeholder:text-slate-300`}
-              autoFocus
-            />
-            {error && (
-              <p className="absolute -bottom-6 left-0 right-0 text-center text-[10px] text-red-500 font-bold uppercase tracking-widest">
-                密码校验失败，请重新输入
-              </p>
-            )}
-          </div>
-          <button 
-            type="submit"
-            className="w-full bg-slate-900 hover:bg-indigo-600 text-white font-black py-4 rounded-2xl transition-all shadow-lg shadow-slate-200 active:scale-[0.98] uppercase text-[11px] tracking-[0.3em]"
-          >
-            进入系统
-          </button>
-        </form>
-        
-        <div className="mt-10 pt-8 border-t border-slate-100 text-center">
-          <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-relaxed">
-            法学引注转换工具<br/>
-            © 2025 工具仅供学习，请再次核查
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
 const App: React.FC = () => {
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [input, setInput] = useState('');
   const [citationStyle, setCitationStyle] = useState<CitationStyle>(CitationStyle.LEGAL);
   // Default to DEEPSEEK as requested by user
@@ -105,6 +41,7 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [history, setHistory] = useState<Citation[]>([]);
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
+  const [copyAllFeedback, setCopyAllFeedback] = useState(false);
 
   const DEFAULT_EXAMPLE = `Charles A. Reich, The New Property, 73 Yale Law Journal 733 (1964).
 申卫星、刘云：《法学研究新范式：计算法学的内涵、范畴与方法》，载《法学研究》2020年第5期，第3-23页。
@@ -112,8 +49,6 @@ const App: React.FC = () => {
 Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recursively generated data[J]. Nature, 2024, 631(8022): 755-759.`;
 
   useEffect(() => {
-    const auth = sessionStorage.getItem('legallink_auth');
-    setIsAuthenticated(auth === 'true');
     const saved = localStorage.getItem('law_citation_v10');
     if (saved) try { setHistory(JSON.parse(saved)); } catch (e) {}
   }, []);
@@ -121,11 +56,6 @@ Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recu
   useEffect(() => {
     localStorage.setItem('law_citation_v10', JSON.stringify(history.slice(0, 50)));
   }, [history]);
-
-  const handleLogin = () => {
-    sessionStorage.setItem('legallink_auth', 'true');
-    setIsAuthenticated(true);
-  };
 
   const handleConvert = async () => {
     if (!input.trim()) return;
@@ -162,6 +92,33 @@ Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recu
     setTimeout(() => setCopyFeedback(null), 1500);
   };
 
+  const getCleanTextAll = () => {
+    return history.map(h => h.formatted.replace(/\*/g, '')).join('\n');
+  };
+
+  const handleCopyAll = () => {
+    const text = getCleanTextAll();
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      setCopyAllFeedback(true);
+      setTimeout(() => setCopyAllFeedback(false), 2000);
+    });
+  };
+
+  const handleExportTxt = () => {
+    const text = getCleanTextAll();
+    if (!text) return;
+    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `法学引注导出_${new Date().toISOString().slice(0, 10)}.txt`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const renderFormattedText = (text: string) => {
     if (!text) return null;
     const parts = text.split(/(\*[^*]+\*)/g);
@@ -176,9 +133,6 @@ Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recu
       </span>
     );
   };
-
-  if (isAuthenticated === null) return null;
-  if (!isAuthenticated) return <Login onLogin={handleLogin} />;
 
   return (
     <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 lg:h-screen">
@@ -268,10 +222,42 @@ Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recu
               <span className="ml-2 w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
             </h2>
             {history.length > 0 && (
-              <button onClick={() => setHistory([])} className="text-[9px] font-bold text-slate-400 hover:text-red-500 transition-colors flex items-center space-x-1">
-                <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                <span>清空记录</span>
-              </button>
+              <div className="flex items-center space-x-3">
+                <button 
+                  onClick={handleExportTxt} 
+                  className="text-[9px] font-bold text-slate-400 hover:text-indigo-600 transition-colors flex items-center space-x-1"
+                  title="导出为TXT文件"
+                >
+                  <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  <span>导出TXT</span>
+                </button>
+
+                <button 
+                  onClick={handleCopyAll} 
+                  className={`text-[9px] font-bold transition-colors flex items-center space-x-1 ${copyAllFeedback ? 'text-emerald-500' : 'text-slate-400 hover:text-indigo-600'}`}
+                  title="复制全部结果"
+                >
+                  {copyAllFeedback ? (
+                    <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                  ) : (
+                    <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
+                  )}
+                  <span>{copyAllFeedback ? '已复制' : '复制全部'}</span>
+                </button>
+
+                <div className="w-px h-3 bg-slate-300"></div>
+
+                <button 
+                  onClick={() => setHistory([])} 
+                  className="text-[9px] font-bold text-slate-400 hover:text-red-500 transition-colors flex items-center space-x-1"
+                  title="清空所有记录"
+                >
+                  <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  <span>清空</span>
+                </button>
+              </div>
             )}
           </div>
 
