@@ -11,22 +11,22 @@ const Header: React.FC = () => (
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
           </svg>
         </div>
-        <h1 className="text-base lg:text-lg font-black text-slate-800 tracking-tight text-nowrap">法学引注<span className="text-indigo-600">转换器</span></h1>
+        <h1 className="text-lg lg:text-xl font-black text-slate-800 tracking-tight text-nowrap">法学引注<span className="text-indigo-600">转换器</span></h1>
       </div>
       
       <div className="flex items-center space-x-4">
         <div className="hidden sm:flex items-center space-x-2 text-nowrap">
-          <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">实时数据比对中</span>
+          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span className="text-xs text-slate-500 font-bold uppercase tracking-widest">实时数据比对中</span>
         </div>
         <a 
-          href="https://www.smallsmallq.com/" 
+          href="https://www.smallsmallq.com/projects" 
           target="_blank" 
           rel="noopener noreferrer"
-          className="group flex items-center space-x-2 bg-slate-50 p-1 pr-3 rounded-full border border-slate-200 hover:border-indigo-200 transition-all shrink-0"
+          className="group flex items-center space-x-2 bg-slate-50 p-1.5 pr-4 rounded-full border border-slate-200 hover:border-indigo-200 transition-all shrink-0"
         >
           <img src="https://i.postimg.cc/zvQ41bSP/logo.png" alt="Q" className="w-7 h-7 rounded-full shadow-sm object-cover"/>
-          <span className="text-[11px] font-bold text-slate-600 group-hover:text-indigo-600 transition-colors">小Q工具箱</span>
+          <span className="text-sm font-bold text-slate-600 group-hover:text-indigo-600 transition-colors">小Q工具箱</span>
         </a>
       </div>
     </div>
@@ -142,10 +142,10 @@ Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recu
         <div className="lg:col-span-4 flex flex-col space-y-4 lg:space-y-5 lg:h-full lg:overflow-hidden">
           <section className="bg-slate-900 rounded-2xl p-4 lg:p-5 text-white shadow-xl shadow-slate-200 relative overflow-hidden animate-glow flex-shrink-0">
             <div className="relative z-10">
-              <h2 className="text-base lg:text-lg font-black mb-1 flex items-center tracking-wider">
+              <h2 className="text-lg lg:text-xl font-black mb-2 flex items-center tracking-wider">
                 转换与等级识别
               </h2>
-              <p className="text-slate-400 text-[9px] lg:text-xs leading-relaxed opacity-90 font-medium">
+              <p className="text-slate-400 text-xs lg:text-sm leading-relaxed opacity-90 font-medium">
                 支持 CLSCI、CSSCI、华政负面清单及全网预警。
               </p>
             </div>
@@ -153,15 +153,15 @@ Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recu
           </section>
 
           <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 lg:p-5 flex flex-col lg:flex-1 lg:min-h-0 transition-all hover:shadow-md h-auto">
-            <div className="grid grid-cols-2 gap-3 mb-3 flex-shrink-0">
+            <div className="grid grid-cols-2 gap-4 mb-4 flex-shrink-0">
               <div>
-                <label className="text-[9px] font-black text-slate-400 mb-1 block uppercase tracking-widest">AI 引擎</label>
-                <div className="flex bg-slate-100 p-0.5 rounded-lg">
+                <label className="text-xs font-black text-slate-400 mb-2 block uppercase tracking-widest">AI 引擎</label>
+                <div className="flex bg-slate-100 p-1 rounded-lg">
                   {[AIProvider.GEMINI, AIProvider.DEEPSEEK].map(p => (
                     <button 
                       key={p} 
                       onClick={() => setProvider(p)}
-                      className={`flex-1 py-1 text-[8px] lg:text-[9px] font-bold rounded-md transition-all ${provider === p ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
+                      className={`flex-1 py-1.5 text-xs lg:text-sm font-bold rounded-md transition-all ${provider === p ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
                     >
                       {p.toUpperCase()}
                     </button>
@@ -169,11 +169,11 @@ Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recu
                 </div>
               </div>
               <div>
-                <label className="text-[9px] font-black text-slate-400 mb-1 block uppercase tracking-widest">引注格式</label>
+                <label className="text-xs font-black text-slate-400 mb-2 block uppercase tracking-widest">引注格式</label>
                 <select 
                   value={citationStyle} 
                   onChange={(e) => setCitationStyle(e.target.value as CitationStyle)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg text-[8px] lg:text-[9px] font-bold py-1 px-2 focus:ring-1 focus:ring-indigo-500 text-slate-900 outline-none cursor-pointer"
+                  className="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs lg:text-sm font-bold py-2 px-3 focus:ring-2 focus:ring-indigo-500 text-slate-900 outline-none cursor-pointer"
                 >
                   <option value={CitationStyle.LEGAL}>《法学引注手册》</option>
                   <option value={CitationStyle.SOCIAL_SCIENCE}>《中国社会科学》</option>
@@ -183,17 +183,17 @@ Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recu
             </div>
 
             <textarea
-              className="w-full lg:flex-1 p-3 lg:p-4 bg-slate-50 border border-slate-200 rounded-xl text-[14px] text-slate-900 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none custom-scrollbar shadow-inner leading-relaxed min-h-[160px] lg:min-h-[100px]"
+              className="w-full lg:flex-1 p-4 lg:p-5 bg-slate-50 border border-slate-200 rounded-xl text-base text-slate-900 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none custom-scrollbar shadow-inner leading-relaxed min-h-[200px] lg:min-h-[240px]"
               placeholder="请粘贴原始文献条目..."
               value={input}
               onChange={(e) => setInput(e.target.value)}
             />
 
-            <div className="mt-3 flex items-center justify-between flex-shrink-0">
-              <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">测试用例</label>
+            <div className="mt-4 flex items-center justify-between flex-shrink-0">
+              <label className="text-xs font-black text-slate-400 uppercase tracking-widest">测试用例</label>
               <button
                 onClick={() => setInput(DEFAULT_EXAMPLE)}
-                className="px-3 py-1 bg-indigo-50 border border-indigo-100 rounded-full text-[8px] lg:text-[9px] font-black text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all shadow-sm active:scale-[0.95]"
+                className="px-4 py-1.5 bg-indigo-50 border border-indigo-100 rounded-full text-xs font-black text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all shadow-sm active:scale-[0.95]"
               >
                 载入默认示例
               </button>
@@ -202,7 +202,7 @@ Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recu
             <button
               onClick={handleConvert}
               disabled={isLoading || !input.trim()}
-              className={`mt-4 w-full py-4 rounded-xl font-black text-white transition-all uppercase text-[10px] lg:text-[11px] tracking-[0.2em] shadow-lg flex items-center justify-center space-x-2 flex-shrink-0 z-10 ${isLoading ? 'bg-slate-300 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98]'}`}
+              className={`mt-5 w-full py-4 rounded-xl font-black text-white transition-all uppercase text-sm lg:text-base tracking-[0.2em] shadow-lg flex items-center justify-center space-x-2 flex-shrink-0 z-10 ${isLoading ? 'bg-slate-300 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98]'}`}
             >
               {isLoading && (
                 <svg className="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24">
@@ -216,19 +216,19 @@ Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recu
         </div>
 
         <div className="lg:col-span-8 flex flex-col lg:h-full lg:overflow-hidden min-h-0">
-          <div className="flex items-center justify-between mb-2 px-1 flex-shrink-0">
-            <h2 className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] flex items-center">
+          <div className="flex items-center justify-between mb-4 px-1 flex-shrink-0">
+            <h2 className="text-xs lg:text-sm font-black text-slate-400 uppercase tracking-[0.2em] flex items-center">
               监测报告
-              <span className="ml-2 w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              <span className="ml-2 w-2 h-2 rounded-full bg-emerald-500"></span>
             </h2>
             {history.length > 0 && (
-              <div className="flex items-center space-x-3">
+              <div className="flex items-center space-x-4">
                 <button 
                   onClick={handleExportTxt} 
-                  className="text-[9px] font-bold text-slate-400 hover:text-indigo-600 transition-colors flex items-center space-x-1"
+                  className="text-xs font-bold text-slate-400 hover:text-indigo-600 transition-colors flex items-center space-x-1.5"
                   title="导出为TXT文件"
                 >
-                  <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
                   </svg>
                   <span>导出TXT</span>
@@ -236,25 +236,25 @@ Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recu
 
                 <button 
                   onClick={handleCopyAll} 
-                  className={`text-[9px] font-bold transition-colors flex items-center space-x-1 ${copyAllFeedback ? 'text-emerald-500' : 'text-slate-400 hover:text-indigo-600'}`}
+                  className={`text-xs font-bold transition-colors flex items-center space-x-1.5 ${copyAllFeedback ? 'text-emerald-500' : 'text-slate-400 hover:text-indigo-600'}`}
                   title="复制全部结果"
                 >
                   {copyAllFeedback ? (
-                    <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
                   ) : (
-                    <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
+                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
                   )}
                   <span>{copyAllFeedback ? '已复制' : '复制全部'}</span>
                 </button>
 
-                <div className="w-px h-3 bg-slate-300"></div>
+                <div className="w-px h-4 bg-slate-300"></div>
 
                 <button 
                   onClick={() => setHistory([])} 
-                  className="text-[9px] font-bold text-slate-400 hover:text-red-500 transition-colors flex items-center space-x-1"
+                  className="text-xs font-bold text-slate-400 hover:text-red-500 transition-colors flex items-center space-x-1.5"
                   title="清空所有记录"
                 >
-                  <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
                   <span>清空</span>
                 </button>
               </div>
@@ -263,13 +263,13 @@ Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recu
 
           <div className="flex-1 lg:overflow-y-auto custom-scrollbar space-y-4 pr-1">
             {history.length === 0 ? (
-              <div className="bg-white border border-slate-200 border-dashed rounded-3xl h-[200px] lg:h-full flex flex-col items-center justify-center text-slate-300 space-y-6">
-                <div className="w-14 h-14 bg-slate-50 rounded-full flex items-center justify-center border border-slate-100">
-                  <svg className="w-6 h-6 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
+              <div className="bg-white border border-slate-200 border-dashed rounded-3xl h-[240px] lg:h-full flex flex-col items-center justify-center text-slate-300 space-y-6">
+                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center border border-slate-100">
+                  <svg className="w-8 h-8 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
                 </div>
                 <div className="text-center px-4">
-                  <p className="text-[9px] font-black uppercase tracking-[0.3em] mb-1 text-slate-400">等待处理文献</p>
-                  <p className="text-[8px] opacity-60">在上方输入后，系统将实时比对官方数据库并标注等级</p>
+                  <p className="text-sm font-black uppercase tracking-[0.3em] mb-2 text-slate-400">等待处理文献</p>
+                  <p className="text-xs opacity-60">在上方输入后，系统将实时比对官方数据库并标注等级</p>
                 </div>
               </div>
             ) : (
@@ -277,15 +277,15 @@ Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recu
                 <div 
                   key={item.id} 
                   onClick={() => copyToClipboard(item.formatted, item.id)}
-                  className={`group relative p-4 lg:p-6 rounded-2xl border-2 transition-all cursor-pointer ${item.rankDetail?.isNegative ? 'bg-white border-red-500 shadow-xl shadow-red-50 ring-2 ring-red-100' : 'bg-white border-slate-100 hover:border-indigo-400 hover:shadow-lg'}`}
+                  className={`group relative p-5 lg:p-6 rounded-2xl border-2 transition-all cursor-pointer ${item.rankDetail?.isNegative ? 'bg-white border-red-500 shadow-xl shadow-red-50 ring-2 ring-red-100' : 'bg-white border-slate-100 hover:border-indigo-400 hover:shadow-lg'}`}
                 >
-                  <div className="flex flex-wrap items-center gap-1.5 mb-3">
+                  <div className="flex flex-wrap items-center gap-2 mb-4">
                     {item.rankDetail?.isNegative ? (
-                      <span className="text-[8px] px-2 py-0.5 rounded bg-red-600 text-white font-black uppercase tracking-widest flex items-center shadow-lg shadow-red-100">
+                      <span className="text-xs px-2.5 py-1 rounded bg-red-600 text-white font-black uppercase tracking-widest flex items-center shadow-lg shadow-red-100">
                         风险 / 负面
                       </span>
                     ) : (
-                      <span className="text-[8px] px-2 py-0.5 rounded bg-slate-800 text-white font-black uppercase tracking-widest">
+                      <span className="text-xs px-2.5 py-1 rounded bg-slate-800 text-white font-black uppercase tracking-widest">
                         官方标准
                       </span>
                     )}
@@ -293,7 +293,7 @@ Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recu
                     {item.rankDetail?.tags?.map((tag, idx) => (
                       <span 
                         key={idx} 
-                        className={`text-[8px] px-2 py-0.5 rounded-md font-bold flex items-center border ${
+                        className={`text-xs px-2.5 py-1 rounded-md font-bold flex items-center border ${
                           tag.type === 'negative' ? 'bg-red-50 text-red-700 border-red-200' : 
                           tag.type === 'legal_core' ? 'bg-indigo-600 text-white border-transparent' :
                           'bg-indigo-50 text-indigo-700 border-indigo-100'
@@ -304,12 +304,12 @@ Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recu
                     ))}
                   </div>
 
-                  <div className={`leading-relaxed text-[14px] lg:text-[15px] antialiased ${item.rankDetail?.isNegative ? 'text-red-600 font-bold italic' : 'text-slate-800'}`}>
+                  <div className={`leading-relaxed text-base lg:text-lg antialiased ${item.rankDetail?.isNegative ? 'text-red-600 font-bold italic' : 'text-slate-800'}`}>
                     {renderFormattedText(item.formatted)}
                   </div>
 
                   {copyFeedback === item.id && (
-                    <div className="absolute top-3 right-3 bg-emerald-500 text-white text-[9px] font-black px-2 py-0.5 rounded-full shadow-lg animate-bounce">
+                    <div className="absolute top-4 right-4 bg-emerald-500 text-white text-xs font-black px-3 py-1 rounded-full shadow-lg animate-bounce">
                       已复制
                     </div>
                   )}
@@ -320,9 +320,9 @@ Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recu
         </div>
       </main>
 
-      <footer className="bg-white text-slate-400 py-2.5 px-6 lg:px-8 border-t border-slate-200 flex-shrink-0">
-        <div className="max-w-[1600px] mx-auto flex justify-between items-center text-[8px] font-black tracking-widest uppercase">
-          <div className="flex items-center space-x-2">
+      <footer className="bg-white text-slate-400 py-4 px-6 lg:px-8 border-t border-slate-200 flex-shrink-0">
+        <div className="max-w-[1600px] mx-auto flex justify-between items-center text-xs font-black tracking-widest uppercase">
+          <div className="flex items-center space-x-3">
             <span className="text-indigo-600">法学引注转换工具</span>
             <span className="opacity-20">|</span>
             <span>© 2025 工具仅供学习，请再次核查</span>
