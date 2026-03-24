@@ -2,6 +2,19 @@ import React, { useState, useEffect } from 'react';
 import { TargetLanguage, Citation, CitationStyle, AIProvider } from './types';
 import { processCitation } from './services/aiService';
 
+const splitInputLines = (input: string) =>
+  input
+    .split(/\r?\n/)
+    .map(line =>
+      line
+        .replace(/^〔\d+〕\s*/, '')
+        .replace(/^\[\d+\]\s*/, '')
+        .replace(/^\(\d+\)\s*/, '')
+        .replace(/^\d+[.、]\s*/, '')
+        .trim()
+    )
+    .filter(Boolean);
+
 const Header: React.FC = () => (
   <header className="bg-white border-b border-slate-200 flex-shrink-0 z-20 sticky top-0">
     <div className="max-w-[1600px] mx-auto px-4 lg:px-6 h-14 flex items-center justify-between">
@@ -61,12 +74,15 @@ Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recu
     if (!input.trim()) return;
     setIsLoading(true);
     try {
+      const originalLines = splitInputLines(input);
       const results = await processCitation(input, TargetLanguage.ZH, citationStyle, provider);
       const newCitations: Citation[] = results.map((res, index) => ({
         id: (Date.now() + index).toString(),
-        original: input.split('\n')[index] || input,
+        original: originalLines[index] || input,
         formatted: res.text,
         level: res.level,
+        docType: res.docType,
+        docTypeLabel: res.docTypeLabel,
         rankDetail: res.rankDetail,
         style: citationStyle,
         provider: provider,
@@ -143,10 +159,10 @@ Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recu
           <section className="bg-slate-900 rounded-2xl p-4 lg:p-5 text-white shadow-xl shadow-slate-200 relative overflow-hidden animate-glow flex-shrink-0">
             <div className="relative z-10">
               <h2 className="text-lg lg:text-xl font-black mb-2 flex items-center tracking-wider">
-                转换与等级识别
+                类型识别与引注转换
               </h2>
               <p className="text-slate-400 text-xs lg:text-sm leading-relaxed opacity-90 font-medium">
-                支持 CLSCI、CSSCI、华政负面清单及全网预警。
+                先判断文献类型，再按手册转换，并叠加 CLSCI、CSSCI 与预警比对。
               </p>
             </div>
             <div className="absolute -right-10 -bottom-10 w-24 h-24 bg-indigo-600/30 rounded-full blur-3xl"></div>
@@ -280,6 +296,12 @@ Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recu
                   className={`group relative p-5 lg:p-6 rounded-2xl border-2 transition-all cursor-pointer ${item.rankDetail?.isNegative ? 'bg-white border-red-500 shadow-xl shadow-red-50 ring-2 ring-red-100' : 'bg-white border-slate-100 hover:border-indigo-400 hover:shadow-lg'}`}
                 >
                   <div className="flex flex-wrap items-center gap-2 mb-4">
+                    {item.docTypeLabel && (
+                      <span className="text-xs px-2.5 py-1 rounded bg-amber-50 text-amber-700 border border-amber-200 font-bold">
+                        类型 · {item.docTypeLabel}
+                      </span>
+                    )}
+
                     {item.rankDetail?.isNegative ? (
                       <span className="text-xs px-2.5 py-1 rounded bg-red-600 text-white font-black uppercase tracking-widest flex items-center shadow-lg shadow-red-100">
                         风险 / 负面
