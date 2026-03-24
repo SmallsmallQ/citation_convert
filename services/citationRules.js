@@ -58,8 +58,18 @@ const normalizeZhPunctuation = (text) => {
     segment
       .replace(/\s*·\s*/g, "·")
       .replace(/\s*([，。；：])\s*/g, "$1")
+      .replace(/,/g, "，")
       .replace(/\s*,\s*/g, "，")
       .replace(/\s*:\s*(?=《|“|「|『)/g, "：")
+      .replace(/(\d)\s+年/g, "$1年")
+      .replace(/年\s+(\d)/g, "年$1")
+      .replace(/年\s+第/g, "年第")
+      .replace(/(\d)\s+月/g, "$1月")
+      .replace(/月\s+(\d)/g, "月$1")
+      .replace(/(\d)\s+日/g, "$1日")
+      .replace(/第\s+(\d+)/g, "第$1")
+      .replace(/(\d)\s+号/g, "$1号")
+      .replace(/GB\/T\s+/g, "GB/T ")
       .replace(/\(\s*/g, "(")
       .replace(/\s*\)/g, ")")
       .replace(/\s{2,}/g, " ")
@@ -120,6 +130,11 @@ const extractInstitution = (text) => {
   return match?.[1]?.trim() || "";
 };
 
+const isOfficialDocumentText = (text) =>
+  /国发[\[〔【(（]\d{2,4}[\]〕】)）]|法释[\[〔【(（]\d{2,4}[\]〕】)）]|GB\/T|已废止|审议稿|讨论稿/.test(text) ||
+  /《[^》]*(?:通知|决定|意见|报告|白皮书|批复|说明|草案)[^》]*》/.test(text) ||
+  /^(?:[^：:]{1,40}[：:])?《[^》]+》[，,]?\d{4}年\d{1,2}月\d{1,2}日发布/.test(text);
+
 export const cleanInputLine = (line) =>
   line
     .replace(/^〔\d+〕\s*/, "")
@@ -157,11 +172,18 @@ export const detectCitationRule = (raw) => {
     pubName,
   });
 
-  if (/指导案例|案例库|判决书|裁定书|裁判书|诉.+案/.test(text)) {
+  if (
+    /指导案例|人民法院案例库|诉(?!讼法).+案|载《最高人民法院公报》/.test(text) ||
+    /.+法院[^，,。]*?(?:判决书|裁定书|决定书|裁判书)/.test(text)
+  ) {
     return makeResult(DOC_TYPES.JUDICIAL_CASE, "high", "命中案例/裁判文书显性线索", "");
   }
 
-  if (/\bv\.|\sv\./.test(text) || text.includes("v.")) {
+  if (
+    language === "en" &&
+    !/https?:\/\//i.test(text) &&
+    /[A-Za-z].{0,80}\bv\.\s*[A-Z]/.test(text)
+  ) {
     return makeResult(DOC_TYPES.ENGLISH_CASE, "high", "命中英美案例 v. 线索", "");
   }
 
@@ -177,16 +199,19 @@ export const detectCitationRule = (raw) => {
     return makeResult(DOC_TYPES.WECHAT_ARTICLE, "high", "命中微信公众号显性线索", extractWechatAccount(text));
   }
 
+  if (isOfficialDocumentText(text)) {
+    return makeResult(DOC_TYPES.OFFICIAL_DOCUMENT, "high", "命中规范性/官方文件显性线索", "");
+  }
+
   if (/https?:\/\/|网址|访问。?$|访问$/.test(text)) {
     return makeResult(DOC_TYPES.WEB_ARTICLE, "high", "命中 URL 或访问日期线索", extractWebsiteName(text));
   }
 
-  if (/《.+》第\d+条/.test(text) || (/法律|条例|办法|规定|民法典|刑法|诉讼法/.test(text) && /第\d+条/.test(text))) {
+  if (
+    /《.+?》(?:[（(][^()（）]*[)）])?第\d+条/.test(text) ||
+    (/法律|条例|办法|规定|民法典|刑法|诉讼法/.test(text) && /第\d+条/.test(text))
+  ) {
     return makeResult(DOC_TYPES.LEGAL_DOCUMENT, "high", "命中法律文件与条文线索", "");
-  }
-
-  if (/国发[\[〔【(（]\d{2,4}[\]〕】)）]|法释[\[〔【(（]\d{2,4}[\]〕】)）]|通知|决定|意见|报告|白皮书|会议通过|GB\/T/.test(text)) {
-    return makeResult(DOC_TYPES.OFFICIAL_DOCUMENT, "high", "命中规范性/官方文件显性线索", "");
   }
 
   if (/载《.+》\d{4}年\d{1,2}月\d{1,2}日，第?\d+版/.test(text)) {
@@ -205,12 +230,12 @@ export const detectCitationRule = (raw) => {
     return makeResult(DOC_TYPES.BOOK, "high", "命中中文图书格式", extractPublisher(text));
   }
 
-  if (language === "ja" && /『.+』/.test(text)) {
-    return makeResult(DOC_TYPES.JAPANESE_BOOK, "high", "命中日文图书书名号", "");
-  }
-
   if (language === "ja" && /「.+」/.test(text)) {
     return makeResult(DOC_TYPES.JAPANESE_ARTICLE, "high", "命中日文文章标题符号", "");
+  }
+
+  if (language === "ja" && /『.+』/.test(text)) {
+    return makeResult(DOC_TYPES.JAPANESE_BOOK, "high", "命中日文图书书名号", "");
   }
 
   if (language === "en" && /,\s*\d+\s+[A-Z][A-Za-z.&' -]+?\s+\d+(?:,\s*\d+(?:-\d+)?)?\s*\(\d{4}\)/.test(normalizeEnglishSpacing(text))) {
@@ -288,17 +313,33 @@ const formatThesis = (text) => {
 };
 
 const formatLegalDocument = (text) => {
-  if (!/《.+》第\d+条/.test(text)) return null;
+  if (!/《.+?》(?:[（(][^()（）]*[)）])?第\d+条/.test(text)) return null;
   return normalizeZhPunctuation(normalizeDocumentNumberBrackets(text));
 };
 
 const formatOfficialDocument = (text) => {
-  if (!/通知|决定|意见|报告|白皮书|会议通过|GB\/T|〔\d{2,4}〕|\[\d{2,4}\]/.test(text)) return null;
+  if (!isOfficialDocumentText(text) && !/会议通过|〔\d{2,4}〕|\[\d{2,4}\]/.test(text)) {
+    return null;
+  }
   return normalizeZhPunctuation(normalizeDocumentNumberBrackets(text));
 };
 
 const formatJudicialCase = (text) => {
-  if (!/案|判决书|裁定书|案例库|指导案例/.test(text)) return null;
+  if (
+    !/诉(?!讼法).+案|指导案例|人民法院案例库|载《最高人民法院公报》/.test(text) &&
+    !/.+法院[^，,。]*?(?:判决书|裁定书|决定书|裁判书)/.test(text)
+  ) {
+    return null;
+  }
+  if (/载《最高人民法院公报》\d{4}年第\d+期/.test(text)) {
+    return normalizeZhPunctuation(text);
+  }
+  if (/人民法院案例库\s*\d{4}-\d{2}-\d-\d{3}-\d{3}/.test(text)) {
+    return normalizeZhPunctuation(text.replace(/人民法院案例库\s+/, "人民法院案例库"));
+  }
+  if (/指导案例\d+号\(\d{4}年\)/.test(text)) {
+    return normalizeZhPunctuation(text);
+  }
   const reordered = text.replace(
     /^(?<caseName>.+?案)[，,](?<court>.+?法院)(?<docType>[^，,()（）]*?(?:判决书|裁定书|决定书))[，,]\s*(?<caseNo>[（(]\d{4}[)）][^，,。]+)[。.]?$/u,
     "$<caseName>，$<court>$<caseNo>$<docType>",
@@ -329,7 +370,7 @@ const formatEnglishNews = (text) => {
 };
 
 const formatEnglishCase = (text) => {
-  if (!(text.includes("v.") || /\bv\./.test(text))) return null;
+  if (!/[A-Za-z].{0,80}\bv\.\s*[A-Z]/.test(text) || /https?:\/\//i.test(text)) return null;
   const normalized = normalizeEnglishSpacing(text)
     .replace(/,Inc\./g, ", Inc.")
     .replace(/,Inc\. v\./g, ", Inc. v.")
