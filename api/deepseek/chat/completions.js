@@ -18,6 +18,14 @@ const readBody = (req) =>
     req.on('error', reject);
   });
 
+const normalizeDeepSeekBody = (rawBody) => {
+  const payload = rawBody ? JSON.parse(rawBody) : {};
+  return JSON.stringify({
+    ...payload,
+    response_format: payload.response_format || { type: 'json_object' },
+  });
+};
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.setHeader('Allow', 'POST');
@@ -38,7 +46,7 @@ export default async function handler(req, res) {
         'Content-Type': 'application/json',
         Authorization: `Bearer ${apiKey}`,
       },
-      body: await readBody(req),
+      body: normalizeDeepSeekBody(await readBody(req)),
     });
 
     const contentType = upstream.headers.get('content-type') || 'application/json; charset=utf-8';

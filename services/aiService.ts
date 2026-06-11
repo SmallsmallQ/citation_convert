@@ -157,6 +157,10 @@ const callGeminiJson = async ({ prompt, systemInstruction, schema }: JsonGenerat
 };
 
 const callDeepSeekJson = async ({ prompt, systemInstruction }: JsonGenerationOptions) => {
+  const jsonPrompt = `${prompt}
+
+请只返回合法 JSON 对象，格式为 {"results":[...]}。不要返回 Markdown、解释文字或代码块。`;
+
   const response = await fetch("/api/deepseek/chat/completions", {
     method: "POST",
     headers: {
@@ -166,9 +170,10 @@ const callDeepSeekJson = async ({ prompt, systemInstruction }: JsonGenerationOpt
       model: "deepseek-chat",
       messages: [
         { role: "system", content: systemInstruction },
-        { role: "user", content: prompt },
+        { role: "user", content: jsonPrompt },
       ],
       temperature: 0.1,
+      response_format: { type: "json_object" },
     }),
   });
 
@@ -300,7 +305,7 @@ const mergeFormattedResults = (entries: ClassifiedCitation[], aiResults: any[]):
 
   return entries.map((entry) => {
     const ai = aiByIndex.get(entry.index);
-    const text = typeof ai?.text === "string" && ai.text.trim() ? ai.text.trim() : entry.original;
+    const text = typeof ai?.text === "string" && ai.text.trim() ? ai.text.trim() : "";
     const pubName = typeof ai?.pubName === "string" && ai.pubName.trim() ? ai.pubName.trim() : entry.pubName;
     const docType = isCitationDocType(ai?.docType) ? ai.docType : entry.docType;
 
@@ -400,19 +405,23 @@ const formatCitations = async (
         })
       : [];
 
+    if (fallbackEntries.length && !aiResults.length) {
+      throw new Error("AI 未返回有效的引注转换 JSON。请检查模型接口、环境变量和部署日志。");
+    }
+
     const merged = mergeFormattedResults(fallbackEntries, aiResults);
     const aiByIndex = new Map(merged.map((entry) => [entry.index, entry]));
 
     return localFormatted.map(({ usedLocalRules: _usedLocalRules, ...entry }) => {
       if (entry.text) return entry;
-      return aiByIndex.get(entry.index) || entry;
+      const aiEntry = aiByIndex.get(entry.index);
+      if (aiEntry?.text) return aiEntry;
+      throw new Error(`AI 未能转换第 ${Number(entry.index) + 1} 条引注。`);
     });
   } catch (error) {
     console.error("Formatting Error:", error);
-    return localFormatted.map(({ usedLocalRules: _usedLocalRules, ...entry }) => ({
-      ...entry,
-      text: entry.text || entries.find((item) => item.index === entry.index)?.original || "",
-    }));
+    const message = error instanceof Error ? error.message : "引注转换失败。";
+    throw new Error(message);
   }
 };
 
