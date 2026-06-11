@@ -345,23 +345,6 @@ const classifyCitations = async (lines: string[], provider: AIProvider) => {
     };
   });
 
-  const needsAi = heuristics.some(
-    (entry) =>
-      entry.heuristicDocType === CitationDocType.UNKNOWN || entry.heuristicConfidence === "low",
-  );
-
-  if (!needsAi) {
-    return heuristics.map((entry) => ({
-      index: entry.index,
-      original: entry.original,
-      language: entry.language,
-      docType: entry.heuristicDocType,
-      docTypeLabel: entry.heuristicDocTypeLabel,
-      confidence: entry.heuristicConfidence,
-      pubName: entry.heuristicPubName,
-    }));
-  }
-
   try {
     const aiResults = await generateJson(provider, {
       prompt: buildClassificationPrompt(heuristics),

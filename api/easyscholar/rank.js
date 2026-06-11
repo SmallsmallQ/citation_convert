@@ -5,7 +5,11 @@ export default async function handler(req, res) {
     return;
   }
 
-  const secretKey = process.env.EASY_SCHOLAR_SECRET;
+  const secretKey =
+    process.env.EASY_SCHOLAR_SECRET ||
+    process.env.EASYSCHOLAR_SECRET ||
+    process.env.EASY_SCHOLAR_API_KEY ||
+    process.env.SCHOLAR_API_KEY;
   if (!secretKey) {
     res.status(200).json({ code: 200, data: null });
     return;

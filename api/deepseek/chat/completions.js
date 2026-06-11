@@ -1,5 +1,15 @@
 const readBody = (req) =>
   new Promise((resolve, reject) => {
+    if (typeof req.body === 'string') {
+      resolve(req.body);
+      return;
+    }
+
+    if (req.body && typeof req.body === 'object') {
+      resolve(JSON.stringify(req.body));
+      return;
+    }
+
     let body = '';
     req.on('data', (chunk) => {
       body += chunk.toString();
@@ -15,7 +25,7 @@ export default async function handler(req, res) {
     return;
   }
 
-  const apiKey = process.env.DEEPSEEK_API_KEY;
+  const apiKey = process.env.DEEPSEEK_API_KEY || process.env.DEEPSEEK_KEY;
   if (!apiKey) {
     res.status(500).json({ error: { message: 'DeepSeek API Key 未配置。请在 Vercel 环境变量中设置 DEEPSEEK_API_KEY。' } });
     return;

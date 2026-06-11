@@ -17,8 +17,12 @@ const sendJson = (res: any, status: number, payload: unknown) => {
 };
 
 const apiProxyPlugin = (env: Record<string, string>): Plugin => {
-  const deepSeekKey = env.DEEPSEEK_API_KEY;
-  const easyScholarSecret = env.EASY_SCHOLAR_SECRET;
+  const deepSeekKey = env.DEEPSEEK_API_KEY || env.DEEPSEEK_KEY;
+  const easyScholarSecret =
+    env.EASY_SCHOLAR_SECRET ||
+    env.EASYSCHOLAR_SECRET ||
+    env.EASY_SCHOLAR_API_KEY ||
+    env.SCHOLAR_API_KEY;
 
   const middleware = async (req: any, res: any, next: () => void) => {
     const url = new URL(req.url || '/', 'http://localhost');

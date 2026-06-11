@@ -110,6 +110,14 @@ const extractQuotedContainer = (text) => {
   return match?.[1]?.trim() || "";
 };
 
+const extractEnglishJournal = (text) => {
+  const gbMatch = normalizeEnglishSpacing(text).match(/\[J\]\.?\s*(?<journal>.+?),\s*\d{4},\s*\d+/i);
+  if (gbMatch?.groups?.journal) return gbMatch.groups.journal.trim();
+
+  const legalMatch = normalizeEnglishSpacing(text).match(/,\s*\d+\s+(?<journal>[A-Z][A-Za-z.&' -]+?)\s+\d+(?:,\s*\d+(?:-\d+)?)?\s*\(\d{4}\)/);
+  return legalMatch?.groups?.journal?.trim() || "";
+};
+
 const extractPublisher = (text) => {
   const match = text.match(/([^，,。\s]+出版社)/);
   return match?.[1]?.trim() || "";
@@ -222,7 +230,7 @@ export const detectCitationRule = (raw) => {
     return makeResult(DOC_TYPES.COLLECTION_ARTICLE, "high", "命中文集/集刊析出文献格式", extractQuotedContainer(text));
   }
 
-  if (/载《.+》\d{4}年第\d+期/.test(text)) {
+  if (/载《.+》\d{4}年\s*第\s*\d+\s*期/.test(text)) {
     return makeResult(DOC_TYPES.JOURNAL_ARTICLE, "high", "命中中文期刊文章格式", extractQuotedContainer(text));
   }
 
@@ -239,7 +247,11 @@ export const detectCitationRule = (raw) => {
   }
 
   if (language === "en" && /,\s*\d+\s+[A-Z][A-Za-z.&' -]+?\s+\d+(?:,\s*\d+(?:-\d+)?)?\s*\(\d{4}\)/.test(normalizeEnglishSpacing(text))) {
-    return makeResult(DOC_TYPES.ENGLISH_ARTICLE, "high", "命中英文学术期刊卷页格式", "");
+    return makeResult(DOC_TYPES.ENGLISH_ARTICLE, "high", "命中英文学术期刊卷页格式", extractEnglishJournal(text));
+  }
+
+  if (language === "en" && /\[J\]\.?\s*.+?,\s*\d{4},\s*\d+\s*(?:\(\d+\))?\s*:\s*\d+/i.test(normalizeEnglishSpacing(text))) {
+    return makeResult(DOC_TYPES.ENGLISH_ARTICLE, "high", "命中英文 GB/T 期刊格式", extractEnglishJournal(text));
   }
 
   if (language === "en" && /(Press|Publishing|University Press|Pub\.)[, ]+\d{4}/i.test(text)) {
@@ -261,8 +273,16 @@ const formatChineseBook = (text) => {
 
 const formatChineseJournal = (text) => {
   const match = text.match(/^(?<author>.+?)[：:](?<title>《.+?》)[，,]?载《(?<container>[^》]+)》(?<rest>.+)$/);
-  if (!match?.groups?.author || !/\d{4}年第\d+期/.test(match.groups.rest)) return null;
-  return normalizeZhPunctuation(`${match.groups.author}：${match.groups.title}，载《${match.groups.container}》${match.groups.rest}`);
+  if (match?.groups?.author && /\d{4}年\s*第\s*\d+\s*期/.test(match.groups.rest)) {
+    return normalizeZhPunctuation(`${match.groups.author}：${match.groups.title}，载《${match.groups.container}》${match.groups.rest}`);
+  }
+
+  const noAuthorMatch = text.match(/^《?(?<title>[^《》：:，,]+)》[，,]?载《(?<container>[^》]+)》(?<rest>.+)$/);
+  if (noAuthorMatch?.groups?.title && /\d{4}年\s*第\s*\d+\s*期/.test(noAuthorMatch.groups.rest)) {
+    return normalizeZhPunctuation(`《${noAuthorMatch.groups.title}》，载《${noAuthorMatch.groups.container}》${noAuthorMatch.groups.rest}`);
+  }
+
+  return null;
 };
 
 const formatCollectionArticle = (text) => {
@@ -350,9 +370,20 @@ const formatJudicialCase = (text) => {
 const formatEnglishArticle = (text) => {
   const normalized = normalizeEnglishSpacing(text);
   const match = normalized.match(/^(?<author>.+?), (?<title>.+?), (?<volume>\d+) (?<journal>.+?) (?<page>\d+)(?<pin>, \d+(?:-\d+)?)? \((?<year>\d{4})\)\.?$/);
-  if (!match?.groups?.author) return null;
-  const pin = match.groups.pin || "";
-  return `${normalizeEnglishAuthor(match.groups.author)}, *${match.groups.title.trim()}*, ${match.groups.volume} ${match.groups.journal.trim()} ${match.groups.page}${pin} (${match.groups.year}).`;
+  if (match?.groups?.author) {
+    const pin = match.groups.pin || "";
+    return `${normalizeEnglishAuthor(match.groups.author)}, *${match.groups.title.trim()}*, ${match.groups.volume} ${match.groups.journal.trim()} ${match.groups.page}${pin} (${match.groups.year}).`;
+  }
+
+  const gbMatch = normalized.match(/^(?<before>.+?)\[J\]\.?\s*(?<journal>.+?),\s*(?<year>\d{4}),\s*(?<volume>\d+)\s*(?<issue>\(\d+\))?\s*:\s*(?<pages>\d+(?:-\d+)?)\.?$/i);
+  if (!gbMatch?.groups?.before) return null;
+
+  const before = gbMatch.groups.before.trim();
+  const etAlSplit = before.match(/^(?<author>.+?\bet al\.)\s*(?<title>.+)$/i);
+  if (!etAlSplit?.groups?.author || !etAlSplit.groups.title) return null;
+
+  const issue = gbMatch.groups.issue || "";
+  return `${normalizeEnglishAuthor(etAlSplit.groups.author)}, *${etAlSplit.groups.title.trim()}*, ${gbMatch.groups.journal.trim()}, ${gbMatch.groups.year}, ${gbMatch.groups.volume}${issue}: ${gbMatch.groups.pages}.`;
 };
 
 const formatEnglishBook = (text) => {
@@ -433,6 +464,7 @@ export const formatCitationByRules = (raw, style = "legal", explicitDocType = ""
     pubName:
       detected.pubName ||
       extractQuotedContainer(text) ||
+      extractEnglishJournal(text) ||
       extractPublisher(text) ||
       extractWebsiteName(text) ||
       extractWechatAccount(text) ||

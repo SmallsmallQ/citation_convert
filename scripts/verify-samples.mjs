@@ -12,6 +12,12 @@ const cases = [
     expected: "季卫东：《法律程序的意义——对中国法制建设的另一种思考》，载《中国社会科学》1993年第1期，第91页。",
   },
   {
+    label: "无作者中文期刊文章补书名号",
+    input: "生成式人工智能的知识产权法律因应与制度创新》，载《法制博览》2025年第32期，第130-132页。",
+    expected: "《生成式人工智能的知识产权法律因应与制度创新》，载《法制博览》2025年第32期，第130-132页。",
+    expectedDocType: "journal_article",
+  },
+  {
     label: "文集文章",
     input: "王保树：《股份有限公司机关构造中的董事和董事会》,载梁慧星主编：《民商法论丛》第1卷，法律出版社1994年版，第110页。",
     expected: "王保树：《股份有限公司机关构造中的董事和董事会》，载梁慧星主编：《民商法论丛》第1卷，法律出版社1994年版，第110页。",
@@ -134,6 +140,12 @@ const cases = [
     label: "英文期刊文章",
     input: "Charles A.Reich,The New Property,73 Yale Law Journal 733,737-738(1964).",
     expected: "Charles A. Reich, *The New Property*, 73 Yale Law Journal 733, 737-738 (1964).",
+  },
+  {
+    label: "英文GB/T期刊文章",
+    input: "Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recursively generated data[J]. Nature, 2024, 631(8022): 755-759.",
+    expected: "Shumailov I, Shumaylov Z, Zhao Y, et al., *AI models collapse when trained on recursively generated data*, Nature, 2024, 631(8022): 755-759.",
+    expectedDocType: "english_article",
   },
   {
     label: "英文图书",

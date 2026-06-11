@@ -22,6 +22,8 @@ View your app in AI Studio: https://ai.studio/apps/66dc802e-387a-4f0e-809b-33dd9
    GEMINI_API_KEY=your_gemini_key
    ```
    `API_KEY` is also supported as an alias for `GEMINI_API_KEY`.
+   `DEEPSEEK_KEY` is also supported as an alias for `DEEPSEEK_API_KEY`.
+   `EASYSCHOLAR_SECRET`, `EASY_SCHOLAR_API_KEY`, and `SCHOLAR_API_KEY` are also supported as aliases for `EASY_SCHOLAR_SECRET`.
 3. Run the app:
    `npm run dev`
 
