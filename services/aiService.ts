@@ -157,16 +157,10 @@ const callGeminiJson = async ({ prompt, systemInstruction, schema }: JsonGenerat
 };
 
 const callDeepSeekJson = async ({ prompt, systemInstruction }: JsonGenerationOptions) => {
-  const apiKey = process.env.DEEPSEEK_API_KEY;
-  if (!apiKey) {
-    throw new Error("DeepSeek API Key 未配置。请确保环境变量 DEEPSEEK_API_KEY 已正确设置。");
-  }
-
-  const response = await fetch("https://api.deepseek.com/chat/completions", {
+  const response = await fetch("/api/deepseek/chat/completions", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
       model: "deepseek-chat",
@@ -179,7 +173,7 @@ const callDeepSeekJson = async ({ prompt, systemInstruction }: JsonGenerationOpt
   });
 
   if (!response.ok) {
-    const errorData = await response.json();
+    const errorData = await response.json().catch(() => ({}));
     throw new Error(`DeepSeek API 错误: ${errorData.error?.message || response.statusText}`);
   }
 
