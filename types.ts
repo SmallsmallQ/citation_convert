@@ -13,6 +13,23 @@ export interface Citation {
     isNegative?: boolean;
   };
   timestamp: number;
+  source?: 'csl' | 'rules' | 'ai';
+  warnings?: string[];
+}
+
+export interface CslItem {
+  id: string;
+  type: string;
+  title?: string;
+  language?: string;
+  [key: string]: any;
+}
+
+export interface CslReference {
+  key: string;
+  id: string;
+  locator: string;
+  label: string;
 }
 
 export enum TargetLanguage {

@@ -59,6 +59,7 @@ interface FormattedCitation {
   pubName: string;
   docType: CitationDocType;
   docTypeLabel: string;
+  source?: 'rules' | 'ai';
 }
 
 interface CitationProcessResult {
@@ -67,6 +68,7 @@ interface CitationProcessResult {
   pubName: string;
   docType: CitationDocType;
   docTypeLabel: string;
+  source?: 'rules' | 'ai';
   rankDetail: {
     tags: Array<{ label: string; value: string; type: string }>;
     isNegative?: boolean;
@@ -312,6 +314,7 @@ const mergeFormattedResults = (entries: ClassifiedCitation[], aiResults: any[]):
     return {
       index: entry.index,
       text,
+      source: 'ai' as const,
       level: typeof ai?.level === "string" ? ai.level.trim() : "",
       pubName,
       docType,
@@ -351,11 +354,12 @@ const classifyCitations = async (lines: string[], provider: AIProvider) => {
   });
 
   try {
-    const aiResults = await generateJson(provider, {
-      prompt: buildClassificationPrompt(heuristics),
+    const uncertain = heuristics.filter(entry => entry.heuristicConfidence !== 'high');
+    const aiResults = uncertain.length ? await generateJson(provider, {
+      prompt: buildClassificationPrompt(uncertain),
       systemInstruction: CLASSIFICATION_SYSTEM_INSTRUCTION,
       schema: provider === AIProvider.GEMINI ? geminiClassificationSchema : undefined,
-    });
+    }) : [];
 
     return mergeClassifications(heuristics, aiResults);
   } catch (error) {
@@ -388,6 +392,7 @@ const formatCitations = async (
       docType: (ruleResult.docType as CitationDocType) || entry.docType,
       docTypeLabel: ruleResult.docTypeLabel || entry.docTypeLabel,
       usedLocalRules: ruleResult.usedLocalRules,
+      source: 'rules' as const,
     };
   });
 
@@ -448,6 +453,7 @@ export const processCitation = async (
         pubName: entry.pubName,
         docType: entry.docType,
         docTypeLabel: entry.docTypeLabel,
+        source: entry.source,
         rankDetail: {
           tags: official.tags,
           isNegative: official.isNegative || entry.level?.includes("风险") || entry.level?.includes("负面"),

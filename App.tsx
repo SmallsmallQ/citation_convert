@@ -1,363 +1,143 @@
-import React, { useState, useEffect } from 'react';
+import React, { lazy, Suspense, useEffect, useRef, useState } from 'react';
 import { TargetLanguage, Citation, CitationStyle, AIProvider } from './types';
-import { processCitation } from './services/aiService';
+import { splitInputLines } from './services/citationRules.js';
+import { STYLE_LABELS } from './constants';
+import './app.css';
 
-const splitInputLines = (input: string) =>
-  input
-    .split(/\r?\n/)
-    .map(line =>
-      line
-        .replace(/^〔\d+〕\s*/, '')
-        .replace(/^\[\d+\]\s*/, '')
-        .replace(/^\(\d+\)\s*/, '')
-        .replace(/^\d+[.、]\s*/, '')
-        .trim()
-    )
-    .filter(Boolean);
-
-const Header: React.FC = () => (
-  <header className="bg-white border-b border-slate-200 flex-shrink-0 z-20 sticky top-0">
-    <div className="max-w-[1600px] mx-auto px-4 lg:px-6 h-14 flex items-center justify-between">
-      <div className="flex items-center space-x-2">
-        <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-200">
-          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253" />
-          </svg>
-        </div>
-        <h1 className="text-lg lg:text-xl font-black text-slate-800 tracking-tight text-nowrap">法学引注<span className="text-indigo-600">转换器</span></h1>
-      </div>
-      
-      <div className="flex items-center space-x-4">
-        <div className="hidden sm:flex items-center space-x-2 text-nowrap">
-          <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-          <span className="text-xs text-slate-500 font-bold uppercase tracking-widest">实时数据比对中</span>
-        </div>
-        <a 
-          href="https://www.smallsmallq.com/projects" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="group flex items-center space-x-2 bg-slate-50 p-1.5 pr-4 rounded-full border border-slate-200 hover:border-indigo-200 transition-all shrink-0"
-        >
-          <img src="https://i.postimg.cc/zvQ41bSP/logo.png" alt="Q" className="w-7 h-7 rounded-full shadow-sm object-cover"/>
-          <span className="text-sm font-bold text-slate-600 group-hover:text-indigo-600 transition-colors">小Q工具箱</span>
-        </a>
-      </div>
-    </div>
-  </header>
-);
-
-const App: React.FC = () => {
-  const [input, setInput] = useState('');
-  const [citationStyle, setCitationStyle] = useState<CitationStyle>(CitationStyle.LEGAL);
-  // Default to DEEPSEEK as requested by user
-  const [provider, setProvider] = useState<AIProvider>(AIProvider.DEEPSEEK);
-  const [isLoading, setIsLoading] = useState(false);
-  const [history, setHistory] = useState<Citation[]>([]);
-  const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
-  const [copyAllFeedback, setCopyAllFeedback] = useState(false);
-
-  const DEFAULT_EXAMPLE = `Charles A. Reich, The New Property, 73 Yale Law Journal 733 (1964).
+const CslEditor = lazy(() => import('./components/CslEditor'));
+const STORAGE_KEY = 'law_citation_v10';
+const EXAMPLE = `Charles A. Reich, The New Property, 73 Yale Law Journal 733, 737-738 (1964).
 申卫星、刘云：《法学研究新范式：计算法学的内涵、范畴与方法》，载《法学研究》2020年第5期，第3-23页。
-生成式人工智能的知识产权法律因应与制度创新》，载《法制博览》2025年第32期，第130-132页。
-Shumailov I, Shumaylov Z, Zhao Y, et al. AI models collapse when trained on recursively generated data[J]. Nature, 2024, 631(8022): 755-759.`;
+王名扬：《美国行政法》,中国法制出版社1995年版，第18页。
+《民法典》第1224条第1款。`;
+
+function loadHistory(): Citation[] {
+  try {
+    const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    return Array.isArray(data) ? data.filter(item => item && typeof item.id === 'string' && typeof item.formatted === 'string' && typeof item.original === 'string').slice(0, 200) : [];
+  } catch { return []; }
+}
+const cleanText = (text: string) => text.replace(/\*([^*]+)\*/g, '$1');
+function FormattedText({ text }: { text: string }) {
+  return <>{text.split(/(\*[^*]+\*)/g).map((part, index) => part.startsWith('*') && part.endsWith('*') ? <i key={index}>{part.slice(1, -1)}</i> : <React.Fragment key={index}>{part}</React.Fragment>)}</>;
+}
+function download(content: string, extension: string) {
+  const url = URL.createObjectURL(new Blob([content], { type: 'text/plain;charset=utf-8' }));
+  const link = document.createElement('a');
+  link.href = url; link.download = `法学引注_${new Date().toLocaleDateString('sv-SE')}.${extension}`;
+  link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+export default function App() {
+  const [mode, setMode] = useState<'text' | 'csl'>('text');
+  const [cslOpened, setCslOpened] = useState(false);
+  const [input, setInput] = useState('');
+  const [style, setStyle] = useState(CitationStyle.LEGAL);
+  const [provider, setProvider] = useState(AIProvider.DEEPSEEK);
+  const [isLoading, setIsLoading] = useState(false);
+  const [history, setHistory] = useState<Citation[]>(loadHistory);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [search, setSearch] = useState('');
+  const [warningsOnly, setWarningsOnly] = useState(false);
+  const [numbered, setNumbered] = useState(false);
+  const [undo, setUndo] = useState<Citation[]>([]);
+  const resultRef = useRef<HTMLElement>(null);
+  const copyTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    const saved = localStorage.getItem('law_citation_v10');
-    if (saved) try { setHistory(JSON.parse(saved)); } catch (e) {}
-  }, []);
-
-  useEffect(() => {
-    localStorage.setItem('law_citation_v10', JSON.stringify(history.slice(0, 50)));
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(history.slice(0, 200))); }
+    catch { setError('浏览器存储不可用，本次记录无法自动保存，请及时导出。'); }
   }, [history]);
+  useEffect(() => () => { if (copyTimer.current) clearTimeout(copyTimer.current); }, []);
 
-  const handleConvert = async () => {
-    if (!input.trim()) return;
-    setIsLoading(true);
+  const addResults = (results: Citation[]) => {
+    setHistory(prev => [...results, ...prev].slice(0, 200)); setSearch(''); setWarningsOnly(false);
+    setNotice(`已生成 ${results.length} 条引注`);
+    if (copyTimer.current) clearTimeout(copyTimer.current);
+    copyTimer.current = setTimeout(() => setNotice(''), 2000);
+    if (window.innerWidth <= 620) resultRef.current?.scrollIntoView({ block: 'start' });
+  };
+  const convert = async () => {
+    if (!input.trim() || isLoading) return;
+    const lines = splitInputLines(input);
+    if (lines.length > 200) { setError('每次最多转换 200 条文献，请分批处理。'); return; }
+    setIsLoading(true); setError('');
     try {
-      const originalLines = splitInputLines(input);
-      const results = await processCitation(input, TargetLanguage.ZH, citationStyle, provider);
-      const newCitations: Citation[] = results.map((res, index) => ({
-        id: (Date.now() + index).toString(),
-        original: originalLines[index] || input,
-        formatted: res.text,
-        level: res.level,
-        docType: res.docType,
-        docTypeLabel: res.docTypeLabel,
-        rankDetail: res.rankDetail,
-        style: citationStyle,
-        provider: provider,
-        timestamp: Date.now(),
-      }));
-      setHistory(prev => [...newCitations, ...prev]);
-      setInput('');
-      if (window.innerWidth < 1024) {
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      }
-    } catch (err: any) { 
-      alert(err.message || '转换错误，请检查网络或 API 配置'); 
-    } finally { 
-      setIsLoading(false); 
-    }
+      const { processCitation } = await import('./services/aiService');
+      const results = await processCitation(input, TargetLanguage.ZH, style, provider);
+      addResults(results.map((result, index) => ({
+        id: crypto.randomUUID(), original: lines[index], formatted: result.text,
+        level: result.level, docType: result.docType, docTypeLabel: result.docTypeLabel,
+        rankDetail: result.rankDetail, source: result.source,
+        warnings: result.source === 'ai' ? ['AI 辅助转换，请核对字段与引用定位。'] : [],
+        style, provider, timestamp: Date.now(),
+      })));
+    } catch (err) { setError((err as Error).message || '转换失败，请重试。'); }
+    finally { setIsLoading(false); }
   };
-
-  const copyToClipboard = (text: string, id: string) => {
-    if (!text) return;
-    const cleanText = text.replace(/\*/g, '');
-    navigator.clipboard.writeText(cleanText);
-    setCopyFeedback(id);
-    setTimeout(() => setCopyFeedback(null), 1500);
+  const copy = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(cleanText(text));
+      setNotice('已复制');
+      if (copyTimer.current) clearTimeout(copyTimer.current);
+      copyTimer.current = setTimeout(() => setNotice(''), 2000);
+    } catch { setError('复制失败，请使用导出或手动选择文字复制。'); }
   };
+  const filtered = history.filter(item => (!warningsOnly || item.warnings?.length) && `${item.formatted} ${item.original}`.toLowerCase().includes(search.toLowerCase()));
+  const exportText = (markdown = false) => filtered.map((item, index) => `${numbered ? `〔${index + 1}〕` : ''}${markdown ? item.formatted : cleanText(item.formatted)}`).join('\n');
+  const warningCount = history.filter(item => item.warnings?.length).length;
 
-  const getCleanTextAll = () => {
-    return history.map(h => h.formatted.replace(/\*/g, '')).join('\n');
-  };
-
-  const handleCopyAll = () => {
-    const text = getCleanTextAll();
-    if (!text) return;
-    navigator.clipboard.writeText(text).then(() => {
-      setCopyAllFeedback(true);
-      setTimeout(() => setCopyAllFeedback(false), 2000);
-    });
-  };
-
-  const handleExportTxt = () => {
-    const text = getCleanTextAll();
-    if (!text) return;
-    const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `法学引注导出_${new Date().toISOString().slice(0, 10)}.txt`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
-  };
-
-  const renderFormattedText = (text: string) => {
-    if (!text) return null;
-    const parts = text.split(/(\*[^*]+\*)/g);
-    return (
-      <span>
-        {parts.map((part, index) => {
-          if (part.startsWith('*') && part.endsWith('*') && part.length > 2) {
-            return <i key={index} className="italic font-serif">{part.slice(1, -1)}</i>;
-          }
-          return <span key={index}>{part}</span>;
-        })}
-      </span>
-    );
-  };
-
-  return (
-    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900 lg:h-screen">
-      <Header />
-      
-      <main className="max-w-[1600px] mx-auto w-full p-4 lg:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 flex-1 lg:overflow-hidden min-h-0">
-        <div className="lg:col-span-4 flex flex-col space-y-4 lg:space-y-5 lg:h-full lg:overflow-hidden">
-          <section className="bg-slate-900 rounded-2xl p-4 lg:p-5 text-white shadow-xl shadow-slate-200 relative overflow-hidden animate-glow flex-shrink-0">
-            <div className="relative z-10">
-              <h2 className="text-lg lg:text-xl font-black mb-2 flex items-center tracking-wider">
-                类型识别与引注转换
-              </h2>
-              <p className="text-slate-400 text-xs lg:text-sm leading-relaxed opacity-90 font-medium">
-                先判断文献类型，再按手册转换，并叠加 CLSCI、CSSCI 与预警比对。
-              </p>
+  return <div className="app">
+    <header className="site-header">
+      <a className="brand" href="#"><span className="brand-icon" aria-hidden="true">「」</span><span>法学引注<span className="brand-light">转换器</span></span></a>
+      <div className="header-links"><a href="https://www.smallsmallq.com/projects" target="_blank" rel="noreferrer">小Q工具箱 ↗</a></div>
+    </header>
+    <main>
+      <div className="workspace">
+        <section className="input-panel" aria-label="文献输入">
+          <div className="tabs" role="tablist" aria-label="输入方式">
+            <button id="text-tab" role="tab" aria-controls="text-panel" aria-selected={mode === 'text'} onClick={() => setMode('text')}>文本转换</button>
+            <button id="csl-tab" role="tab" aria-controls="csl-panel" aria-selected={mode === 'csl'} onClick={() => { setCslOpened(true); setMode('csl'); }}>CSL 精确引注</button>
+          </div>
+          <div id="text-panel" role="tabpanel" aria-labelledby="text-tab" hidden={mode !== 'text'}>
+            <div className="panel-body">
+              <div className="settings"><label>引注体例<select value={style} disabled={isLoading} onChange={e => setStyle(e.target.value as CitationStyle)}>{Object.entries(STYLE_LABELS).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
+                <label>AI 辅助<select value={provider} disabled={isLoading} onChange={e => setProvider(e.target.value as AIProvider)}><option value={AIProvider.DEEPSEEK}>DeepSeek</option><option value={AIProvider.GEMINI}>Gemini</option></select></label></div>
+              <div className="input-toolbar"><label htmlFor="citation-input">原始文献</label><button className="text-button" disabled={isLoading} onClick={() => setInput(EXAMPLE)}>载入示例</button></div>
+              <textarea id="citation-input" value={input} disabled={isLoading} onChange={e => setInput(e.target.value)} placeholder={'每行一条，粘贴原始文献…\n\n王名扬：《美国行政法》，中国法制出版社1995年版，第18页。'} onKeyDown={e => { if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') { e.preventDefault(); void convert(); } }} />
+              <div className="input-meta"><span>{splitInputLines(input).length} 条文献</span><span>⌘ / Ctrl + Enter</span></div>
+              {error && <p className="error" role="alert">{error}</p>}
+              <button className="button primary generate" disabled={isLoading || !input.trim()} onClick={() => void convert()}>{isLoading ? '正在转换…' : '转换引注'}<span aria-hidden="true">↗</span></button>
             </div>
-            <div className="absolute -right-10 -bottom-10 w-24 h-24 bg-indigo-600/30 rounded-full blur-3xl"></div>
-          </section>
-
-          <section className="bg-white rounded-2xl shadow-sm border border-slate-200 p-4 lg:p-5 flex flex-col lg:flex-1 lg:min-h-0 transition-all hover:shadow-md h-auto">
-            <div className="grid grid-cols-2 gap-4 mb-4 flex-shrink-0">
-              <div>
-                <label className="text-xs font-black text-slate-400 mb-2 block uppercase tracking-widest">AI 引擎</label>
-                <div className="flex bg-slate-100 p-1 rounded-lg">
-                  {[AIProvider.GEMINI, AIProvider.DEEPSEEK].map(p => (
-                    <button 
-                      key={p} 
-                      onClick={() => setProvider(p)}
-                      className={`flex-1 py-1.5 text-xs lg:text-sm font-bold rounded-md transition-all ${provider === p ? 'bg-white text-indigo-600 shadow-sm' : 'text-slate-400 hover:text-slate-600'}`}
-                    >
-                      {p.toUpperCase()}
-                    </button>
-                  ))}
-                </div>
-              </div>
-              <div>
-                <label className="text-xs font-black text-slate-400 mb-2 block uppercase tracking-widest">引注格式</label>
-                <select 
-                  value={citationStyle} 
-                  onChange={(e) => setCitationStyle(e.target.value as CitationStyle)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg text-xs lg:text-sm font-bold py-2 px-3 focus:ring-2 focus:ring-indigo-500 text-slate-900 outline-none cursor-pointer"
-                >
-                  <option value={CitationStyle.LEGAL}>《法学引注手册》</option>
-                  <option value={CitationStyle.SOCIAL_SCIENCE}>《中国社会科学》</option>
-                  <option value={CitationStyle.GB7714}>GB/T 7714</option>
-                </select>
-              </div>
-            </div>
-
-            <textarea
-              className="w-full lg:flex-1 p-4 lg:p-5 bg-slate-50 border border-slate-200 rounded-xl text-base text-slate-900 placeholder:text-slate-400 focus:bg-white focus:ring-2 focus:ring-indigo-500 outline-none transition-all resize-none custom-scrollbar shadow-inner leading-relaxed min-h-[200px] lg:min-h-[240px]"
-              placeholder="请粘贴原始文献条目..."
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-            />
-
-            <div className="mt-4 flex items-center justify-between flex-shrink-0">
-              <label className="text-xs font-black text-slate-400 uppercase tracking-widest">测试用例</label>
-              <button
-                onClick={() => setInput(DEFAULT_EXAMPLE)}
-                className="px-4 py-1.5 bg-indigo-50 border border-indigo-100 rounded-full text-xs font-black text-indigo-600 hover:bg-indigo-600 hover:text-white transition-all shadow-sm active:scale-[0.95]"
-              >
-                载入默认示例
-              </button>
-            </div>
-            
-            <button
-              onClick={handleConvert}
-              disabled={isLoading || !input.trim()}
-              className={`mt-5 w-full py-4 rounded-xl font-black text-white transition-all uppercase text-sm lg:text-base tracking-[0.2em] shadow-lg flex items-center justify-center space-x-2 flex-shrink-0 z-10 ${isLoading ? 'bg-slate-300 cursor-not-allowed' : 'bg-indigo-600 hover:bg-indigo-700 active:scale-[0.98]'}`}
-            >
-              {isLoading && (
-                <svg className="animate-spin h-3.5 w-3.5 text-white" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none"></circle>
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                </svg>
-              )}
-              <span>{isLoading ? '同步中...' : '立即转换引注'}</span>
-            </button>
-          </section>
-        </div>
-
-        <div className="lg:col-span-8 flex flex-col lg:h-full lg:overflow-hidden min-h-0">
-          <div className="flex items-center justify-between mb-4 px-1 flex-shrink-0">
-            <h2 className="text-xs lg:text-sm font-black text-slate-400 uppercase tracking-[0.2em] flex items-center">
-              监测报告
-              <span className="ml-2 w-2 h-2 rounded-full bg-emerald-500"></span>
-            </h2>
-            {history.length > 0 && (
-              <div className="flex items-center space-x-4">
-                <button 
-                  onClick={handleExportTxt} 
-                  className="text-xs font-bold text-slate-400 hover:text-indigo-600 transition-colors flex items-center space-x-1.5"
-                  title="导出为TXT文件"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                  </svg>
-                  <span>导出TXT</span>
-                </button>
-
-                <button 
-                  onClick={handleCopyAll} 
-                  className={`text-xs font-bold transition-colors flex items-center space-x-1.5 ${copyAllFeedback ? 'text-emerald-500' : 'text-slate-400 hover:text-indigo-600'}`}
-                  title="复制全部结果"
-                >
-                  {copyAllFeedback ? (
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
-                  ) : (
-                    <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" /></svg>
-                  )}
-                  <span>{copyAllFeedback ? '已复制' : '复制全部'}</span>
-                </button>
-
-                <div className="w-px h-4 bg-slate-300"></div>
-
-                <button 
-                  onClick={() => setHistory([])} 
-                  className="text-xs font-bold text-slate-400 hover:text-red-500 transition-colors flex items-center space-x-1.5"
-                  title="清空所有记录"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                  <span>清空</span>
-                </button>
-              </div>
-            )}
           </div>
-
-          <div className="flex-1 lg:overflow-y-auto custom-scrollbar space-y-4 pr-1">
-            {history.length === 0 ? (
-              <div className="bg-white border border-slate-200 border-dashed rounded-3xl h-[240px] lg:h-full flex flex-col items-center justify-center text-slate-300 space-y-6">
-                <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center border border-slate-100">
-                  <svg className="w-8 h-8 opacity-20" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"/></svg>
-                </div>
-                <div className="text-center px-4">
-                  <p className="text-sm font-black uppercase tracking-[0.3em] mb-2 text-slate-400">等待处理文献</p>
-                  <p className="text-xs opacity-60">在上方输入后，系统将实时比对官方数据库并标注等级</p>
-                </div>
+          <div id="csl-panel" role="tabpanel" aria-labelledby="csl-tab" hidden={mode !== 'csl'}>
+            {cslOpened && <Suspense fallback={<p className="panel-body">正在载入引注样式…</p>}><CslEditor onGenerate={addResults} /></Suspense>}
+          </div>
+        </section>
+        <section className="results-panel" ref={resultRef} aria-label="引注结果" aria-busy={isLoading}>
+          <div className="results-heading"><h2>引注结果 <span>{history.length || ''}</span></h2>{history.length > 0 && <button className="text-button clear" onClick={() => { setUndo(history); setHistory([]); }}>清空</button>}</div>
+          {history.length > 0 && <>
+            <div className="results-toolbar"><input type="search" aria-label="搜索引注" placeholder="搜索文献…" value={search} onChange={e => setSearch(e.target.value)} />{warningCount > 0 && <button className={`filter ${warningsOnly ? 'active' : ''}`} aria-pressed={warningsOnly} onClick={() => setWarningsOnly(v => !v)}>待核对 {warningCount}</button>}</div>
+            <div className="export-toolbar"><label><input type="checkbox" checked={numbered} onChange={e => setNumbered(e.target.checked)} /> 添加编号</label><div><button className="text-button" disabled={!filtered.length} onClick={() => void copy(exportText())}>复制{search || warningsOnly ? '筛选结果' : '全部'}</button><button className="text-button" disabled={!filtered.length} onClick={() => download(exportText(), 'txt')}>TXT ↓</button><button className="text-button" disabled={!filtered.length} title="保留斜体标记" onClick={() => download(exportText(true), 'md')}>Markdown ↓</button></div></div>
+          </>}
+          <div className="result-list">
+            {history.length === 0 ? <div className="empty-state"><p>转换结果将显示在这里</p></div> : !filtered.length ? <div className="empty-state"><p>没有匹配的引注</p><button className="text-button" onClick={() => { setSearch(''); setWarningsOnly(false); }}>显示全部</button></div> : filtered.map((item, index) => <article className="citation-card" key={item.id}>
+              <span className="number citation-number">{index + 1}</span>
+              <p className="citation-text"><FormattedText text={item.formatted} /></p>
+              <div className="citation-actions"><details className="original"><summary>{item.warnings?.length ? `核对 · ${item.warnings.length}` : '核对'}</summary>
+                {!!item.warnings?.length && <ul className="warnings">{item.warnings.map((warning, i) => <li key={i}>{warning}</li>)}</ul>}
+                <pre>{item.original}</pre><span className="original-style">{STYLE_LABELS[item.style]}{item.source ? ` · ${item.source === 'csl' ? 'CSL' : item.source === 'rules' ? '本地规则' : 'AI 辅助'}` : ''}</span>
+              </details><button className="text-button" onClick={() => void copy(item.formatted)}>复制</button>
+              {item.rankDetail?.tags?.length ? <div className="rank-tags">{Array.from(new Set(item.rankDetail.tags.map(tag => tag.label))).map(label => <span className={item.rankDetail!.tags.some(tag => tag.label === label && tag.type === 'negative') ? 'negative' : ''} key={label}>{label}</span>)}</div> : null}
               </div>
-            ) : (
-              history.map((item) => (
-                <div 
-                  key={item.id} 
-                  onClick={() => copyToClipboard(item.formatted, item.id)}
-                  className={`group relative p-5 lg:p-6 rounded-2xl border-2 transition-all cursor-pointer ${item.rankDetail?.isNegative ? 'bg-white border-red-500 shadow-xl shadow-red-50 ring-2 ring-red-100' : 'bg-white border-slate-100 hover:border-indigo-400 hover:shadow-lg'}`}
-                >
-                  <div className="flex flex-wrap items-center gap-2 mb-4">
-                    {item.docTypeLabel && (
-                      <span className="text-xs px-2.5 py-1 rounded bg-amber-50 text-amber-700 border border-amber-200 font-bold">
-                        类型 · {item.docTypeLabel}
-                      </span>
-                    )}
-
-                    {item.rankDetail?.isNegative ? (
-                      <span className="text-xs px-2.5 py-1 rounded bg-red-600 text-white font-black uppercase tracking-widest flex items-center shadow-lg shadow-red-100">
-                        风险 / 负面
-                      </span>
-                    ) : (
-                      <span className="text-xs px-2.5 py-1 rounded bg-slate-800 text-white font-black uppercase tracking-widest">
-                        官方标准
-                      </span>
-                    )}
-                    
-                    {item.rankDetail?.tags?.map((tag, idx) => (
-                      <span 
-                        key={idx} 
-                        className={`text-xs px-2.5 py-1 rounded-md font-bold flex items-center border ${
-                          tag.type === 'negative' ? 'bg-red-50 text-red-700 border-red-200' : 
-                          tag.type === 'legal_core' ? 'bg-indigo-600 text-white border-transparent' :
-                          'bg-indigo-50 text-indigo-700 border-indigo-100'
-                        }`}
-                      >
-                        {tag.label} {tag.value && `· ${tag.value}`}
-                      </span>
-                    ))}
-                  </div>
-
-                  <div className={`leading-relaxed text-base lg:text-lg antialiased ${item.rankDetail?.isNegative ? 'text-red-600 font-bold italic' : 'text-slate-800'}`}>
-                    {renderFormattedText(item.formatted)}
-                  </div>
-
-                  {copyFeedback === item.id && (
-                    <div className="absolute top-4 right-4 bg-emerald-500 text-white text-xs font-black px-3 py-1 rounded-full shadow-lg animate-bounce">
-                      已复制
-                    </div>
-                  )}
-                </div>
-              ))
-            )}
+            </article>)}
           </div>
-        </div>
-      </main>
-
-      <footer className="bg-white text-slate-400 py-4 px-6 lg:px-8 border-t border-slate-200 flex-shrink-0">
-        <div className="max-w-[1600px] mx-auto flex justify-between items-center text-xs font-black tracking-widest uppercase">
-          <div className="flex items-center space-x-3">
-            <span className="text-indigo-600">法学引注转换工具</span>
-            <span className="opacity-20">|</span>
-            <span>© 2025 工具仅供学习，请再次核查</span>
-            <span className="opacity-20 hidden sm:inline">|</span>
-            <span className="hidden sm:inline">联系我: gongyunbo@stu.xjtu.edu.cn</span>
-          </div>
-          <div className="hidden sm:block opacity-60">
-            支持 CLSCI / 法C扩 / CSSCI集刊 / 华政负面清单
-          </div>
-        </div>
-      </footer>
-    </div>
-  );
-};
-
-export default App;
+          {undo.length > 0 && history.length === 0 && <button className="text-button clear" onClick={() => { setHistory(undo); setUndo([]); }}>撤销清空</button>}
+          {error && mode === 'csl' && <p className="error" role="alert">{error}</p>}
+        </section>
+      </div>
+    </main>
+    <div className={`toast ${notice ? 'visible' : ''}`} role="status" aria-live="polite">{notice}</div>
+  </div>;
+}
