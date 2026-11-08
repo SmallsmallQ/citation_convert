@@ -1,4 +1,4 @@
-import{r as v,R as t,A as z,C as E}from"./index-DFq3h_kl.js";import{C as k}from"./citeproc-CFGJg-h8.js";const A=`<?xml version="1.0" encoding="utf-8"?>
+import{r as v,R as t,A as z,C as E}from"./index-BLoxBM_A.js";import{C as k}from"./citeproc-CFGJg-h8.js";const A=`<?xml version="1.0" encoding="utf-8"?>
 <style xmlns="http://purl.org/net/xbiblio/csl" class="note" version="1.0" initialize-with=". " demote-non-dropping-particle="sort-only" default-locale="en-US" default-locale-sort="zh-CN">
   <info>
     <title>法学引注手册（第二版，多语言，重复引用不省略，标注页码）</title>

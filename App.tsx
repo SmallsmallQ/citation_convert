@@ -129,7 +129,11 @@ export default function App() {
                 {!!item.warnings?.length && <ul className="warnings">{item.warnings.map((warning, i) => <li key={i}>{warning}</li>)}</ul>}
                 <pre>{item.original}</pre><span className="original-style">{STYLE_LABELS[item.style]}{item.source ? ` · ${item.source === 'csl' ? 'CSL' : item.source === 'rules' ? '本地规则' : 'AI 辅助'}` : ''}</span>
               </details><button className="text-button" onClick={() => void copy(item.formatted)}>复制</button>
-              {item.rankDetail?.tags?.length ? <div className="rank-tags">{Array.from(new Set(item.rankDetail.tags.map(tag => tag.label))).map(label => <span className={item.rankDetail!.tags.some(tag => tag.label === label && tag.type === 'negative') ? 'negative' : ''} key={label}>{label}</span>)}</div> : null}
+              {item.rankDetail?.tags?.length ? <div className="rank-tags">{Array.from(new Set(item.rankDetail.tags.map(tag => tag.label))).map(label => {
+                const tags = item.rankDetail!.tags.filter(tag => tag.label === label);
+                const tone = tags.some(tag => tag.type === 'negative') ? 'negative' : tags.some(tag => tag.type === 'legal_core') ? 'legal-core' : 'standard';
+                return <span className={tone} key={label}>{label}</span>;
+              })}</div> : null}
               </div>
             </article>)}
           </div>
